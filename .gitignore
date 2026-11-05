@@ -1,0 +1,8 @@
+# Data asli sekolah (berisi nama & password siswa) - jangan di-commit
+/*.xlsx
+/*.csv
+/*.pdf
+~$*
+
+node_modules/
+dist/
