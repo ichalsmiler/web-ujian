@@ -1,5 +1,6 @@
 import './style.css';
 import { pasangTabJadwal } from './ui/tab-jadwal';
+import { pasangTabUser } from './ui/tab-user';
 
 function pasangTab(): void {
   const tombol = Array.from(document.querySelectorAll<HTMLButtonElement>('.tab button'));
@@ -16,3 +17,4 @@ function pasangTab(): void {
 
 pasangTab();
 pasangTabJadwal(document.getElementById('tab-jadwal')!);
+pasangTabUser(document.getElementById('tab-user')!);

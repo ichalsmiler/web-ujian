@@ -6,7 +6,7 @@ import { cocokkanJadwal, kunciPilihan, tambahAlias, tambahMapel } from '../core/
 import { susunBarisMapel, tulisMapelXlsx } from '../core/mapel';
 import { formatTanggal } from '../core/tanggal';
 import { GalatFormat, type HasilCocok, type JadwalUjian, type Kamus, type Peringatan, type PilihanMapel } from '../core/tipe';
-import { muatKamus, muatPilihan, saatKamusBerubah, simpanKamus, simpanPilihan, unduhFile } from './simpan';
+import { catatHasilMapel, muatKamus, muatPilihan, saatKamusBerubah, simpanKamus, simpanPilihan, unduhFile } from './simpan';
 import { daftarPesan, el, tabel, type BarisTabel } from './tabel';
 
 interface Status {
@@ -241,6 +241,7 @@ export function pasangTabJadwal(akar: HTMLElement): void {
   function kartuHasil(j: JadwalUjian): HTMLElement {
     const hasil = cocokkanJadwal(j, s.tingkat, s.kamus, s.pilihan[s.tingkat] ?? {});
     const baris = susunBarisMapel(hasil, s.tingkat, s.kamus);
+    catatHasilMapel(s.tingkat, baris.map((b) => b.shortname));
     const tidakDikenal = hasil.filter((h) => h.status === 'tidak-dikenal');
     const duplikat = hasil.filter((h) => h.status === 'duplikat');
     const masalah = hasil.filter((h) => h.status !== 'cocok' || h.dipilih);

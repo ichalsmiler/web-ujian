@@ -116,33 +116,33 @@ Proyek frontend tunggal di root repo: `src/core/` (logika, tanpa DOM),
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T026 [P] [US2] Tes `tests/unit/user-baca.test.ts` untuk `bacaUser`:
+- [X] T026 [P] [US2] Tes `tests/unit/user-baca.test.ts` untuk `bacaUser`:
   - `users-sample.csv` → 8 peserta;
   - versi pemisah `,` → hasil sama;
   - versi Windows-1252 dengan huruf `é` → tidak rusak;
   - versi dengan BOM UTF-8 → kolom `username` tetap dikenali;
   - tanpa kolom `department` → `GalatFormat` yang menyebut `department`;
   - baris dengan `username` kosong → dilewati dengan peringatan
-- [ ] T027 [P] [US2] Tes `tests/unit/user-cbt.test.ts`:
+- [X] T027 [P] [US2] Tes `tests/unit/user-cbt.test.ts`:
   - `keCbt` baris 1 → `Siswa Contoh Satu | XII-1 | XII | 1 | (kosong) | 00-000-0001 | AB12CD`;
   - `kelasJurusan: 'rombel'` → `XII-1`;
   - `Ruang` diisi `trim(address)` sebagai angka jika berupa angka bulat, selain itu kosong;
   - nama berakhiran titik tidak diubah;
   - `lastname` yang sama dengan rombel tidak ditambahkan ke nama
-- [ ] T028 [P] [US2] Tes `tests/unit/user-tulis.test.ts`: round-trip `tulisCbtXlsx` → sheet `template_dokumen_aiocbt`, baris 1–8 sama dengan `tests/fixtures/template-cbtadmin.xlsx`, A1 tebal, lebar kolom sama, header di baris 9, data mulai baris 10, password `07AB12` bertipe teks
+- [X] T028 [P] [US2] Tes `tests/unit/user-tulis.test.ts`: round-trip `tulisCbtXlsx` → sheet `template_dokumen_aiocbt`, baris 1–8 sama dengan `tests/fixtures/template-cbtadmin.xlsx`, A1 tebal, lebar kolom sama, header di baris 9, data mulai baris 10, password `07AB12` bertipe teks
 
 ### Implementation for User Story 2
 
-- [ ] T029 [US2] Implementasi `bacaUser` di `src/core/user.ts`: dekode UTF-8 `fatal` lalu `windows-1252` sebagai cadangan, buang BOM, Papa Parse dengan deteksi pemisah, dukung `.xlsx` (sheet pertama), nama kolom di-trim dan tidak peka huruf besar/kecil — sampai T026 lulus
-- [ ] T030 [US2] Implementasi `keCbt` di `src/core/user.ts` sesuai tabel `PesertaCBT` di [data-model.md](./data-model.md#pesertacbt-baris-output) sampai T027 lulus
-- [ ] T031 [US2] Implementasi `tulisCbtXlsx` di `src/core/user.ts`: muat template, tulis mulai baris 10, set `Password` sebagai teks (`numFmt '@'`) — sampai T028 lulus
-- [ ] T032 [US2] Bangun `src/ui/tab-user.ts`:
+- [X] T029 [US2] Implementasi `bacaUser` di `src/core/user.ts`: dekode UTF-8 `fatal` lalu `windows-1252` sebagai cadangan, buang BOM, Papa Parse dengan deteksi pemisah, dukung `.xlsx` (sheet pertama), nama kolom di-trim dan tidak peka huruf besar/kecil — sampai T026 lulus
+- [X] T030 [US2] Implementasi `keCbt` di `src/core/user.ts` sesuai tabel `PesertaCBT` di [data-model.md](./data-model.md#pesertacbt-baris-output) sampai T027 lulus
+- [X] T031 [US2] Implementasi `tulisCbtXlsx` di `src/core/user.ts`: muat template, tulis mulai baris 10, set `Password` sebagai teks (`numFmt '@'`) — sampai T028 lulus
+- [X] T032 [US2] Bangun `src/ui/tab-user.ts`:
   - input `.csv`/`.xlsx`;
   - pengaturan "Kelas / Jurusan diisi dengan" (Tingkat/Rombel, disimpan via `simpan.ts`);
   - pratinjau 7 kolom dengan password tersamar dan tombol "tampilkan";
   - jumlah peserta dan peringatan;
   - tombol **Unduh** — [contracts/ui.md](./contracts/ui.md#tab-user--cbtadmin)
-- [ ] T033 [US2] Tambahkan panel "Kode mapel tidak cocok" di `src/ui/tab-user.ts`: bandingkan nilai `course1..14` dengan `shortname` hasil konversi tab Jadwal (jika ada), dan tampilkan kode yang tidak ditemukan
+- [X] T033 [US2] Tambahkan panel "Kode mapel tidak cocok" di `src/ui/tab-user.ts`: bandingkan nilai `course1..14` dengan `shortname` hasil konversi tab Jadwal (jika ada), dan tampilkan kode yang tidak ditemukan
 
 **Checkpoint**: US1 dan US2 sama-sama berfungsi secara mandiri
 

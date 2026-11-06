@@ -101,3 +101,26 @@ export function simpanPilihan(namaSheet: string, pilihan: Record<string, Pilihan
     // abaikan
   }
 }
+
+// ---- Hasil konversi mapel terakhir (hanya di memori), dipakai tab User untuk cek kode mapel ----
+
+type PendengarMapel = (hasil: ReadonlyMap<string, readonly string[]>) => void;
+const hasilMapel = new Map<string, string[]>();
+const pendengarMapel = new Set<PendengarMapel>();
+
+/** Dicatat tab Jadwal setiap kali pratinjau mapel suatu tingkat dibuat. */
+export function catatHasilMapel(tingkat: string, shortname: string[]): void {
+  const lama = hasilMapel.get(tingkat);
+  if (lama && lama.length === shortname.length && lama.every((s, i) => s === shortname[i])) return;
+  hasilMapel.set(tingkat, [...shortname]);
+  for (const f of pendengarMapel) f(hasilMapel);
+}
+
+export function ambilHasilMapel(): ReadonlyMap<string, readonly string[]> {
+  return hasilMapel;
+}
+
+export function saatHasilMapelBerubah(f: PendengarMapel): () => void {
+  pendengarMapel.add(f);
+  return () => pendengarMapel.delete(f);
+}

@@ -47,11 +47,7 @@ async function templateCbt(): Promise<void> {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(p('user cbtadmin.xlsx'));
   const ws = wb.worksheets[0];
-  for (let r = 10; r <= ws.rowCount; r++) {
-    ws.getRow(r).eachCell({ includeEmpty: true }, (cell) => {
-      cell.value = null;
-    });
-  }
+  for (let r = ws.rowCount; r >= 10; r--) ws.spliceRows(r, 1);
   const tujuan = p('tests/fixtures/template-cbtadmin.xlsx');
   await wb.xlsx.writeFile(tujuan);
   copyFileSync(tujuan, p('src/assets/template-cbtadmin.xlsx'));
