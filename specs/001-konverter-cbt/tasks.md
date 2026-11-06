@@ -27,12 +27,12 @@ Proyek frontend tunggal di root repo: `src/core/` (logika, tanpa DOM),
 
 **Purpose**: Kerangka proyek dan alat bantu
 
-- [ ] T001 Buat `package.json` (nama `web-ujian`, `"type": "module"`) dengan dependensi `exceljs`, `papaparse` dan devDependensi `typescript`, `vite`, `vite-plugin-singlefile`, `vitest`, `@playwright/test`, `@types/papaparse`; skrip `dev`, `build`, `test`, `test:e2e`
-- [ ] T002 [P] Buat `tsconfig.json` (target ES2022, `strict: true`, `moduleResolution: "bundler"`)
-- [ ] T003 [P] Buat `vite.config.ts` dengan `vite-plugin-singlefile` dan `assetsInlineLimit` yang cukup besar agar `src/assets/template-cbtadmin.xlsx` ikut tertanam di `dist/index.html`
-- [ ] T004 [P] Buat `vitest.config.ts` (environment `node`, include `tests/unit/**/*.test.ts`) dan `playwright.config.ts` (Chromium, `webServer: npm run dev`)
-- [ ] T005 Buat `index.html`, `src/main.ts`, dan `src/style.css` berisi kerangka 3 tab kosong ("Jadwal → Mapel", "User → CBTAdmin", "Kamus Mapel") dengan `lang="id"`
-- [ ] T006 Jalankan `npm install` lalu pastikan `npm run dev`, `npm run build`, dan `npm test` (tanpa tes) berjalan tanpa galat
+- [X] T001 Buat `package.json` (nama `web-ujian`, `"type": "module"`) dengan dependensi `exceljs`, `papaparse` dan devDependensi `typescript`, `vite`, `vite-plugin-singlefile`, `vitest`, `@playwright/test`, `@types/papaparse`; skrip `dev`, `build`, `test`, `test:e2e`
+- [X] T002 [P] Buat `tsconfig.json` (target ES2022, `strict: true`, `moduleResolution: "bundler"`)
+- [X] T003 [P] Buat `vite.config.ts` dengan `vite-plugin-singlefile` dan `assetsInlineLimit` yang cukup besar agar `src/assets/template-cbtadmin.xlsx` ikut tertanam di `dist/index.html`
+- [X] T004 [P] Buat `vitest.config.ts` (environment `node`, include `tests/unit/**/*.test.ts`) dan `playwright.config.ts` (Chromium, `webServer: npm run dev`)
+- [X] T005 Buat `index.html`, `src/main.ts`, dan `src/style.css` berisi kerangka 3 tab kosong ("Jadwal → Mapel", "User → CBTAdmin", "Kamus Mapel") dengan `lang="id"`
+- [X] T006 Jalankan `npm install` lalu pastikan `npm run dev`, `npm run build`, dan `npm test` (tanpa tes) berjalan tanpa galat
 
 ---
 
@@ -42,19 +42,19 @@ Proyek frontend tunggal di root repo: `src/core/` (logika, tanpa DOM),
 
 **⚠️ CRITICAL**: Tidak ada pekerjaan user story sebelum fase ini selesai
 
-- [ ] T007 Definisikan semua tipe di `src/core/tipe.ts` sesuai [data-model.md](./data-model.md): `Mapel`, `GrupMapel`, `Kamus` (`{ versi: 1, mapel, grup }`), `JadwalUjian`, `HariUjian`, `Sesi` (`nomor: 'I' | 'II'`), `HasilCocok` (`status: 'cocok' | 'tidak-dikenal' | 'duplikat'`), `BarisMapel`, `PesertaMasuk`, `PesertaCBT`, `Peringatan` (`tingkat: 'info' | 'peringatan' | 'galat'`), `Pengaturan` (`kelasJurusan: 'tingkat' | 'rombel'`), dan class `GalatFormat`
-- [ ] T008 [P] Buat skrip `scripts/buat-fixture.ts` yang menyalin `jadwal.xlsx` ke `tests/fixtures/jadwal-2026.xlsx` **tanpa** baris tanda tangan (nama/NIP kepala sekolah), menyalin `MAPEL FIX.xlsx` → `tests/fixtures/mapel-fix.xlsx`, dan menyalin `user cbtadmin.xlsx` tanpa 2 baris "User Coba" → `tests/fixtures/template-cbtadmin.xlsx` dan `src/assets/template-cbtadmin.xlsx`
-- [ ] T009 [P] Tulis `tests/fixtures/users-sample.csv` secara manual: 8 peserta **palsu** dengan struktur kolom persis `USER MOODLE.csv` (pemisah `;`, `department` berspasi ` XII-1 `, `address` = `1`, `course1..14`). Baris 1 = `00-000-0001;AB12CD;Siswa Contoh Satu;…`; satu peserta punya password berawalan nol (`07AB12`) dan satu nama berakhiran titik. Tanpa nama, username, atau password asli
-- [ ] T010 Jalankan `scripts/buat-fixture.ts`, lalu pastikan dengan grep bahwa tidak ada data dari `USER MOODLE.csv` maupun NIP kepala sekolah di `tests/` dan `src/`
-- [ ] T011 [P] Tes `tests/unit/tanggal.test.ts`: nilai `Date`, hasil rumus ExcelJS (`{ formula, result }`), teks `05 Desember 2025`, dan teks tak terbaca → `null`
-- [ ] T012 [P] Implementasi `src/core/tanggal.ts` (urai tanggal + nama bulan Indonesia) sampai T011 lulus
-- [ ] T013 [P] Tes `tests/unit/kamus.test.ts`:
+- [X] T007 Definisikan semua tipe di `src/core/tipe.ts` sesuai [data-model.md](./data-model.md): `Mapel`, `GrupMapel`, `Kamus` (`{ versi: 1, mapel, grup }`), `JadwalUjian`, `HariUjian`, `Sesi` (`nomor: 'I' | 'II'`), `HasilCocok` (`status: 'cocok' | 'tidak-dikenal' | 'duplikat'`), `BarisMapel`, `PesertaMasuk`, `PesertaCBT`, `Peringatan` (`tingkat: 'info' | 'peringatan' | 'galat'`), `Pengaturan` (`kelasJurusan: 'tingkat' | 'rombel'`), dan class `GalatFormat`
+- [X] T008 [P] Buat skrip `scripts/buat-fixture.ts` yang menyalin `jadwal.xlsx` ke `tests/fixtures/jadwal-2026.xlsx` **tanpa** baris tanda tangan (nama/NIP kepala sekolah), menyalin `MAPEL FIX.xlsx` → `tests/fixtures/mapel-fix.xlsx`, dan menyalin `user cbtadmin.xlsx` tanpa 2 baris "User Coba" → `tests/fixtures/template-cbtadmin.xlsx` dan `src/assets/template-cbtadmin.xlsx`
+- [X] T009 [P] Tulis `tests/fixtures/users-sample.csv` secara manual: 8 peserta **palsu** dengan struktur kolom persis `USER MOODLE.csv` (pemisah `;`, `department` berspasi ` XII-1 `, `address` = `1`, `course1..14`). Baris 1 = `00-000-0001;AB12CD;Siswa Contoh Satu;…`; satu peserta punya password berawalan nol (`07AB12`) dan satu nama berakhiran titik. Tanpa nama, username, atau password asli
+- [X] T010 Jalankan `scripts/buat-fixture.ts`, lalu pastikan dengan grep bahwa tidak ada data dari `USER MOODLE.csv` maupun NIP kepala sekolah di `tests/` dan `src/`
+- [X] T011 [P] Tes `tests/unit/tanggal.test.ts`: nilai `Date`, hasil rumus ExcelJS (`{ formula, result }`), teks `05 Desember 2025`, dan teks tak terbaca → `null`
+- [X] T012 [P] Implementasi `src/core/tanggal.ts` (urai tanggal + nama bulan Indonesia) sampai T011 lulus
+- [X] T013 [P] Tes `tests/unit/kamus.test.ts`:
   - `normalisasiNama`: `Bhs. Inggris` → `bahasa inggris`; `Kimia Lanjut` dan `Matematika Tingkat Lanjut` → akhiran `lanjutan`; spasi ganda dirapikan;
   - `kamusAwal()` berisi 20 mapel dari `MAPEL FIX.xlsx` plus alias tambahan di [research.md §6](./research.md#6-mencocokkan-nama-mapel-kamus) (`bahasa indonesia lanjutan` → `BINDO LANJUT`, `sejarah` → `SEJARAH INDO`, dst.) dan grup `pendidikan agama` → `['PAI', 'PAK']`;
   - `tambahAlias` tidak mengubah kamus asli, dan menolak alias yang sudah menunjuk ke kode lain
-- [ ] T014 Implementasi `normalisasiNama`, `kamusAwal`, `tambahAlias` di `src/core/kamus.ts` sampai T013 lulus. Nama lengkap disalin apa adanya, termasuk `BHS INDONESIA LANJT`
-- [ ] T015 [P] Implementasi `src/ui/simpan.ts`: baca/tulis `localStorage` dengan kunci `web-ujian.kamus` dan `web-ujian.pengaturan` (kembali ke `kamusAwal()` jika data rusak), serta helper `unduhFile(nama, ArrayBuffer)`
-- [ ] T016 [P] Implementasi `src/ui/tabel.ts`: tabel pratinjau generik (kolom, baris, penanda baris merah/kuning, penghitung jumlah baris) dan kotak daftar `Peringatan`
+- [X] T014 Implementasi `normalisasiNama`, `kamusAwal`, `tambahAlias` di `src/core/kamus.ts` sampai T013 lulus. Nama lengkap disalin apa adanya, termasuk `BHS INDONESIA LANJT`
+- [X] T015 [P] Implementasi `src/ui/simpan.ts`: baca/tulis `localStorage` dengan kunci `web-ujian.kamus` dan `web-ujian.pengaturan` (kembali ke `kamusAwal()` jika data rusak), serta helper `unduhFile(nama, ArrayBuffer)`
+- [X] T016 [P] Implementasi `src/ui/tabel.ts`: tabel pratinjau generik (kolom, baris, penanda baris merah/kuning, penghitung jumlah baris) dan kotak daftar `Peringatan`
 
 **Checkpoint**: Fondasi siap; US1 dan US2 bisa mulai paralel
 
@@ -70,20 +70,20 @@ Proyek frontend tunggal di root repo: `src/core/` (logika, tanpa DOM),
 
 > Tulis dulu, pastikan GAGAL sebelum implementasi
 
-- [ ] T017 [P] [US1] Tes `tests/unit/jadwal.test.ts` dengan `tests/fixtures/jadwal-2026.xlsx`:
+- [X] T017 [P] [US1] Tes `tests/unit/jadwal.test.ts` dengan `tests/fixtures/jadwal-2026.xlsx`:
   - `daftarSheet` → 2 sheet;
   - `bacaJadwal` sheet 2026 → tingkat `['XII', 'X', 'XI']`, 9 hari, 23 Nov – 4 Des 2026, hanya 4 Des `susulan`;
   - sel `Fisika, Kimia Lanjutan` → 2 nama;
   - blok tanda tangan diabaikan;
   - sheet 2025 terbaca, termasuk tanggal teks `05 Desember 2025`;
   - workbook tanpa `HARI/TGL` → `GalatFormat`
-- [ ] T018 [P] [US1] Tes `tests/unit/cocok.test.ts` untuk `cocokkanJadwal`:
+- [X] T018 [P] [US1] Tes `tests/unit/cocok.test.ts` untuk `cocokkanJadwal`:
   - XII → `category` 1–8;
   - `Pendidikan Agama` → kode `['PAI', 'PAK']`;
   - `Bhs. Inggris` di hari ke-5 → `duplikat` (BING sudah di hari ke-3);
   - XII: Geografi Lanjutan, Sosiologi Lanjutan, Biologi Lanjutan, dan Informatika Lanjutan → `tidak-dikenal`;
   - X: KKA dan Kimia → `tidak-dikenal`
-- [ ] T019 [P] [US1] Tes `tests/unit/mapel.test.ts`:
+- [X] T019 [P] [US1] Tes `tests/unit/mapel.test.ts`:
   - `susunBarisMapel` menghasilkan 7 baris pertama persis seperti contoh di `contracts/file-formats.md` (setelah alias untuk nama tidak dikenal ditambahkan);
   - `shortname` unik;
   - round-trip `tulisMapelXlsx` → header `category | format | shortname | fullname`, `category` bertipe angka, satu sheet;
@@ -91,18 +91,18 @@ Proyek frontend tunggal di root repo: `src/core/` (logika, tanpa DOM),
 
 ### Implementation for User Story 1
 
-- [ ] T020 [US1] Implementasi `daftarSheet` dan `bacaJadwal` di `src/core/jadwal.ts` (cari header `HARI/TGL`, kolom `KELAS <romawi>`, baris berpasangan sesi I/II, deteksi `SUSULAN`, berhenti di baris kosong — [research §5](./research.md#5-menemukan-struktur-jadwal)) sampai T017 lulus
-- [ ] T021 [US1] Implementasi `cocokkanJadwal` di `src/core/kamus.ts`: `category` = urutan hari non-susulan yang punya ≥1 mapel untuk tingkat itu; status `duplikat` jika kode sudah muncul di hari lain pada tingkat yang sama — sampai T018 lulus
-- [ ] T022 [US1] Implementasi `susunBarisMapel` dan `tulisMapelXlsx` di `src/core/mapel.ts` (`shortname` = `` `USBK-${tingkat}-${kode}` ``, `fullname` = `` `${namaLengkap} ${tingkat}` ``, `format` = `singleactivity`, urut `category` lalu urutan kemunculan) sampai T019 lulus
-- [ ] T023 [US1] Bangun `src/ui/tab-jadwal.ts`:
+- [X] T020 [US1] Implementasi `daftarSheet` dan `bacaJadwal` di `src/core/jadwal.ts` (cari header `HARI/TGL`, kolom `KELAS <romawi>`, baris berpasangan sesi I/II, deteksi `SUSULAN`, berhenti di baris kosong — [research §5](./research.md#5-menemukan-struktur-jadwal)) sampai T017 lulus
+- [X] T021 [US1] Implementasi `cocokkanJadwal` di `src/core/kamus.ts`: `category` = urutan hari non-susulan yang punya ≥1 mapel untuk tingkat itu; status `duplikat` jika kode sudah muncul di hari lain pada tingkat yang sama — sampai T018 lulus
+- [X] T022 [US1] Implementasi `susunBarisMapel` dan `tulisMapelXlsx` di `src/core/mapel.ts` (`shortname` = `` `USBK-${tingkat}-${kode}` ``, `fullname` = `` `${namaLengkap} ${tingkat}` ``, `format` = `singleactivity`, urut `category` lalu urutan kemunculan) sampai T019 lulus
+- [X] T023 [US1] Bangun `src/ui/tab-jadwal.ts`:
   - input file `.xlsx` dan pilihan sheet;
   - tabel jadwal terbaca (hari susulan abu-abu);
   - tombol tingkat dan tombol **Konvert**, nonaktif sampai jadwal terbaca (FR-004) — [contracts/ui.md](./contracts/ui.md#tab-jadwal--mapel)
-- [ ] T024 [US1] Tambahkan pratinjau hasil di `src/ui/tab-jadwal.ts`:
+- [X] T024 [US1] Tambahkan pratinjau hasil di `src/ui/tab-jadwal.ts`:
   - baris merah `tidak-dikenal` dengan dropdown "pilih mapel" dan tombol "tambah ke kamus" (memanggil `tambahAlias` lalu menyimpan via `simpan.ts`);
   - baris kuning `duplikat` dengan dropdown ganti mapel atau "abaikan";
   - tombol **Unduh `MAPEL <TINGKAT>.xlsx`**, nonaktif selama masih ada baris merah
-- [ ] T025 [US1] Tampilkan `GalatFormat` dan peringatan jadwal dalam Bahasa Indonesia di atas tabel, di `src/ui/tab-jadwal.ts`
+- [X] T025 [US1] Tampilkan `GalatFormat` dan peringatan jadwal dalam Bahasa Indonesia di atas tabel, di `src/ui/tab-jadwal.ts`
 
 **Checkpoint**: US1 berfungsi penuh; MVP bisa didemokan dan dipakai
 

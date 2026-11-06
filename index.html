@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web Ujian — Konverter Jadwal & User</title>
+  </head>
+  <body>
+    <header class="kepala">
+      <h1>Konverter Ujian</h1>
+      <p>Ubah jadwal dan data peserta ke format upload sistem ujian. Semua proses terjadi di komputer ini.</p>
+    </header>
+
+    <nav class="tab" role="tablist">
+      <button role="tab" id="tab-btn-jadwal" aria-controls="tab-jadwal" aria-selected="true">Jadwal → Mapel</button>
+      <button role="tab" id="tab-btn-user" aria-controls="tab-user" aria-selected="false">User → CBTAdmin</button>
+      <button role="tab" id="tab-btn-kamus" aria-controls="tab-kamus" aria-selected="false">Kamus Mapel</button>
+    </nav>
+
+    <main>
+      <section id="tab-jadwal" role="tabpanel" aria-labelledby="tab-btn-jadwal"></section>
+      <section id="tab-user" role="tabpanel" aria-labelledby="tab-btn-user" hidden>
+        <p class="kosong">Fitur ini sedang dibuat.</p>
+      </section>
+      <section id="tab-kamus" role="tabpanel" aria-labelledby="tab-btn-kamus" hidden>
+        <p class="kosong">Fitur ini sedang dibuat.</p>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
