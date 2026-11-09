@@ -173,3 +173,57 @@ describe('pasanganGanda', async () => {
     expect(pasanganGanda(hasil, { [kunciPasangan(hasil[1])]: '' })).toEqual([]);
   });
 });
+
+describe('tingkat kelas moving: XI hanya dengan XI, XII hanya dengan XII', async () => {
+  const { tingkatDariKelasMoving } = await import('../../src/core/moving');
+  const { tingkatPeserta } = await import('../../src/core/moodle');
+
+  // Siswa XI dan XII bernama sama persis (pada data asli, KELAS di sheet KLS. XII masih "XI-…")
+  const SEMUA = [
+    { ...p('92-26-0101', 'Nama Kembar Sekolah', 'X-1'), sheet: 'KLS. XI' },
+    { ...p('93-26-0101', 'Nama Kembar Sekolah', 'XI-1'), sheet: 'KLS. XII' },
+  ];
+  const cocokPerTingkat = (kel: Awaited<ReturnType<typeof bacaFileMoving>>) =>
+    [...new Set(kel.map((k) => k.tingkat))].flatMap((t) =>
+      cocokkanMoving(kel.filter((k) => k.tingkat === t), SEMUA.filter((q) => tingkatPeserta(q) === t)),
+    );
+
+  it('tingkatDariKelasMoving membaca XI / XII dari kolom KELAS', () => {
+    expect(tingkatDariKelasMoving(['XI 1', 'XI 2', 'XI-3'])).toBe('XI');
+    expect(tingkatDariKelasMoving(['XII 1', 'XII2'])).toBe('XII');
+    expect(tingkatDariKelasMoving(['', 'kelas khusus'])).toBe('');
+  });
+
+  it('file moving XI dicocokkan dengan siswa XI', async () => {
+    const b = await bukuContohMoving([{ judul: 'FISIKA 1', siswa: [['Nama Kembar Sekolah', 'XI 1']] }], false);
+    const kel = await bacaFileMoving(b, 'DAFTAR HADIR KELAS MOVING XI FIS.xlsx');
+    expect(kel[0].tingkat).toBe('XI');
+    const hasil = cocokPerTingkat(kel);
+    expect(hasil.map((h) => h.username)).toEqual(['92-26-0101']);
+    expect(movingPerSiswa(hasil, {}, []).get('92-26-0101')).toEqual(['USBK-XI-FISIKA']);
+  });
+
+  it('file moving XII dicocokkan dengan siswa XII dan memberi mapel USBK-XII-…', async () => {
+    const b = await bukuContohMoving([{ judul: 'FISIKA 1', siswa: [['Nama Kembar Sekolah', 'XII 1']] }], false);
+    const kel = await bacaFileMoving(b, 'DAFTAR HADIR KELAS MOVING XII FIS.xlsx');
+    expect(kel[0].tingkat).toBe('XII');
+    const hasil = cocokPerTingkat(kel);
+    expect(hasil.map((h) => h.username)).toEqual(['93-26-0101']);
+    expect(hasil[0].kandidat.every((k) => k.username.startsWith('93-'))).toBe(true);
+    expect(movingPerSiswa(hasil, {}, []).get('93-26-0101')).toEqual(['USBK-XII-FISIKA']);
+  });
+
+  it('nama file tanpa tingkat → tingkat dari kolom KELAS', async () => {
+    const b = await bukuContohMoving([{ judul: 'FISIKA 1', siswa: [['Nama Kembar Sekolah', 'XII 1']] }], false);
+    const [k] = await bacaFileMoving(b, 'DAFTAR HADIR FISIKA.xlsx');
+    expect(k.tingkat).toBe('XII');
+    expect(k.peringatan).toBeUndefined();
+  });
+
+  it('nama file dan kolom KELAS berbeda → tetap ikut nama file, dengan peringatan', async () => {
+    const b = await bukuContohMoving([{ judul: 'FISIKA 1', siswa: [['Nama Kembar Sekolah', 'XII 1']] }], false);
+    const [k] = await bacaFileMoving(b, 'DAFTAR HADIR KELAS MOVING XI FIS.xlsx');
+    expect(k.tingkat).toBe('XI');
+    expect(k.peringatan).toMatch(/kelas XI.*kolom KELAS berisi kelas XII/);
+  });
+});

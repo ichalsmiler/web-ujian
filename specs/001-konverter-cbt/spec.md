@@ -176,6 +176,13 @@ itu ke course siswa di file User Moodle.
    kandidat teratas, mencari siswa lain, atau mengabaikan barisnya.
 3. **Given** siswa tidak ada di file moving, **Then** operator bisa
    menambahkannya secara manual (siswa + mapel moving).
+3a. **Given** file moving kelas XI dan kelas XII, **Then** murid di file moving
+   kelas XI hanya dicocokkan dengan siswa kelas XI (sheet `KLS. XI`), dan murid
+   di file moving kelas XII hanya dengan siswa kelas XII; mapelnya menjadi
+   `USBK-XI-…` atau `USBK-XII-…`. Kelas dibaca dari nama file ("MOVING XI …"),
+   atau dari kolom KELAS jika nama file tidak menyebutnya; jika keduanya
+   berbeda, nama file yang dipakai dan muncul peringatan. Tambah manual menolak
+   siswa dan mapel dari kelas berbeda.
 4. **Given** satu siswa terpasang lebih dari sekali ke mapel yang sama, **Then**
    aplikasi menampilkannya untuk dicek.
 5. **Given** pencocokan selesai, **Then** course siswa di User Moodle = mapel

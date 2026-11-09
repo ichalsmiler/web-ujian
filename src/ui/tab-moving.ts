@@ -88,13 +88,29 @@ export function pasangTabMoving(akar: HTMLElement): void {
     });
 
     const semuaKode = [...new Set([...Object.values(PETA_MAPEL_MOVING), ...muatKamus().mapel.map((m) => m.kode)])].sort();
-    const perSingkatan = new Map<string, KelompokMoving[]>();
-    for (const k of kelompokAktif()) perSingkatan.set(k.singkatan, [...(perSingkatan.get(k.singkatan) ?? []), k]);
+    // Satu baris per (tingkat, mapel): file moving XI dan XII untuk mapel yang sama tetap terpisah.
+    const perMapel = new Map<string, KelompokMoving[]>();
+    for (const k of kelompokAktif()) {
+      const kunci = `${k.tingkat}|${k.singkatan}`;
+      perMapel.set(kunci, [...(perMapel.get(kunci) ?? []), k]);
+    }
+    const urutanTingkat = urutTingkat([...new Set(kelompokAktif().map((k) => k.tingkat))]);
+    const baris = [...perMapel].sort(
+      ([a], [b]) => urutanTingkat.indexOf(a.split('|')[0]) - urutanTingkat.indexOf(b.split('|')[0]) || a.localeCompare(b),
+    );
+    const jumlahPeserta = (t: string) => pesertaTingkat(t).length;
+    const peringatanFile = [...new Map(kelompokAktif().filter((k) => k.peringatan).map((k) => [k.namaFile, k])).values()].map((k) => ({
+      tingkat: 'peringatan' as const,
+      pesan: k.peringatan!,
+      lokasi: k.namaFile,
+    }));
 
-    const tabelMapel = perSingkatan.size
+    const tabelMapel = perMapel.size
       ? tabel(
-          [{ judul: 'Mapel di file' }, { judul: 'Kelompok' }, { judul: 'Siswa', angka: true }, { judul: 'Didaftarkan ke' }],
-          [...perSingkatan].map(([singkatan, kel]) => {
+          [{ judul: 'Kelas' }, { judul: 'Mapel di file' }, { judul: 'Kelompok' }, { judul: 'Siswa', angka: true }, { judul: 'Didaftarkan ke' }, { judul: 'Dicocokkan dengan' }],
+          baris.map(([, kel]) => {
+            const singkatan = kel[0].singkatan;
+            const t = kel[0].tingkat;
             const kode = kel[0].kode;
             const sel = el(
               'select',
@@ -109,10 +125,12 @@ export function pasangTabMoving(akar: HTMLElement): void {
             return {
               tanda: kode ? undefined : ('merah' as const),
               sel: [
+                t,
                 singkatan,
                 kel.map((k) => k.judul).join(', '),
                 kel.reduce((n, k) => n + k.siswa.length, 0),
-                el('span', { class: 'baris-kontrol' }, `USBK-${kel[0].tingkat}-`, sel),
+                el('span', { class: 'baris-kontrol' }, `USBK-${t}-`, sel),
+                ambilPeserta() ? `siswa kelas ${t} saja (${jumlahPeserta(t)} siswa)` : `siswa kelas ${t} saja`,
               ],
             };
           }),
@@ -133,7 +151,12 @@ export function pasangTabMoving(akar: HTMLElement): void {
         hapusSimpanan,
       ),
       el('p', { class: 'bantu' }, 'Format seperti "DAFTAR HADIR KELAS MOVING XI BIO.xlsx": satu sheet per kelompok, judul kelompok di baris 2, kolom NAMA MURID dan KELAS.'),
-      daftarPesan(s.galat),
+      el(
+        'p',
+        { class: 'bantu' },
+        'File moving kelas XI hanya dicocokkan dengan siswa kelas XI (sheet KLS. XI), dan file moving kelas XII hanya dengan siswa kelas XII. Kelas dibaca dari nama file ("MOVING XI …"), atau dari kolom KELAS jika nama file tidak menyebutnya.',
+      ),
+      daftarPesan([...s.galat, ...peringatanFile]),
       tabelMapel,
     );
   }
@@ -283,6 +306,12 @@ export function pasangTabMoving(akar: HTMLElement): void {
       }
       if (!mapel.value) {
         galat.textContent = 'Pilih mapel moving.';
+        return;
+      }
+      const tingkatSiswa = tingkatPeserta(semua.find((q) => q.username === u)!);
+      const tingkatMapel = mapel.value.split('-')[1];
+      if (tingkatSiswa !== tingkatMapel) {
+        galat.textContent = `Siswa kelas ${tingkatSiswa} tidak bisa didaftarkan ke mapel moving kelas ${tingkatMapel}.`;
         return;
       }
       if (!s.manual.some((m) => m.username === u && m.shortname === mapel.value)) s.manual = [...s.manual, { username: u, shortname: mapel.value }];

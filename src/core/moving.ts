@@ -42,10 +42,16 @@ export interface KelompokMoving {
   kode: string;
   /** Singkatan mapel yang terbaca, mis. "BIOLOGI". */
   singkatan: string;
+  /**
+   * Tingkat kelas moving (XI, XII). Murid hanya dicocokkan dengan peserta tingkat ini,
+   * dan mapelnya menjadi USBK-<tingkat>-<kode>.
+   */
   tingkat: string;
   namaFile: string;
   sheet: string;
   siswa: SiswaMoving[];
+  /** Keterangan jika tingkat dari nama file berbeda dengan kolom KELAS. */
+  peringatan?: string;
 }
 
 const normalHeader = (s: string) => s.toUpperCase().replace(/\./g, '').replace(/\s+/g, ' ').trim();
@@ -61,7 +67,17 @@ function singkatanMapel(judul: string, namaFile: string): string {
 
 function tingkatDariNamaFile(namaFile: string): string {
   const m = /MOVING\s+([IVX]+)\b/i.exec(namaFile);
-  return m ? m[1].toUpperCase() : 'XI';
+  return m ? m[1].toUpperCase() : '';
+}
+
+/** Tingkat terbanyak di kolom KELAS ("XI 3" → XI, "XII-2" → XII); '' jika tidak terbaca. */
+export function tingkatDariKelasMoving(kelas: string[]): string {
+  const hitung = new Map<string, number>();
+  for (const k of kelas) {
+    const m = /^\s*([IVX]+)(?=$|[\s\-._/]|\d)/i.exec(k);
+    if (m) hitung.set(m[1].toUpperCase(), (hitung.get(m[1].toUpperCase()) ?? 0) + 1);
+  }
+  return [...hitung].sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
 }
 
 /** Membaca satu file daftar hadir moving; setiap sheet berisi murid = satu kelompok moving. */
@@ -73,7 +89,7 @@ export async function bacaFileMoving(file: ArrayBuffer, namaFile: string): Promi
     throw new GalatFormat(`"${namaFile}" tidak bisa dibuka. Pastikan berformat .xlsx.`);
   }
   const hasil: KelompokMoving[] = [];
-  const tingkat = tingkatDariNamaFile(namaFile);
+  const tingkatFile = tingkatDariNamaFile(namaFile);
   for (const ws of wb.worksheets) {
     let barisHeader = 0;
     let kolNama = 0;
@@ -104,6 +120,13 @@ export async function bacaFileMoving(file: ArrayBuffer, namaFile: string): Promi
     }
     if (siswa.length === 0) continue; // sheet cadangan kosong
 
+    // Tingkat: dari nama file ("MOVING XI …"); jika tidak ada, dari kolom KELAS; terakhir XI.
+    const tingkatKelas = tingkatDariKelasMoving(siswa.map((x) => x.kelas));
+    const tingkat = tingkatFile || tingkatKelas || 'XI';
+    const peringatan =
+      tingkatFile && tingkatKelas && tingkatFile !== tingkatKelas
+        ? `Nama file menyebut kelas ${tingkatFile}, tetapi kolom KELAS berisi kelas ${tingkatKelas}. Murid dicocokkan dengan siswa kelas ${tingkatFile}; ganti nama file jika salah.`
+        : undefined;
     const singkatan = singkatanMapel(judul, namaFile);
     hasil.push({
       judul: judul || `${singkatan} (${ws.name})`,
@@ -113,6 +136,7 @@ export async function bacaFileMoving(file: ArrayBuffer, namaFile: string): Promi
       namaFile,
       sheet: ws.name,
       siswa,
+      ...(peringatan ? { peringatan } : {}),
     });
   }
   if (hasil.length === 0) {
