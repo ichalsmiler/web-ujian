@@ -334,3 +334,21 @@ export function tulisCbtCsv(peserta: PesertaCBT[]): string {
     { newline: '\r\n' },
   );
 }
+
+// ---------- pencarian ----------
+
+const rapatCari = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+/**
+ * Menyaring peserta berdasarkan kata kunci: nama, username (nomor ujian), atau kelas.
+ * Tidak peka huruf besar/kecil, spasi, dan tanda baca. Beberapa kata = semua harus cocok
+ * (mis. "budi xi-3"). Kueri kosong = semua peserta.
+ */
+export function cariPeserta(cbt: PesertaCBT[], kueri: string): PesertaCBT[] {
+  const kata = kueri.split(/\s+/).map(rapatCari).filter(Boolean);
+  if (kata.length === 0) return cbt;
+  return cbt.filter((p) => {
+    const teks = [p.namaPeserta, p.username, p.namaRombel].map(rapatCari).join(' ');
+    return kata.every((k) => teks.includes(k));
+  });
+}

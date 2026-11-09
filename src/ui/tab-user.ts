@@ -4,7 +4,7 @@
 
 import templateUrl from '../assets/template-cbtadmin.xlsx?url';
 import { GalatFormat, type PesertaCBT, type PesertaMasuk, type Peringatan } from '../core/tipe';
-import { bacaUser, isiPassword, keCbt, kodeTidakCocok, tulisCbtCsv, tulisCbtXlsx } from '../core/user';
+import { bacaUser, cariPeserta, isiPassword, keCbt, kodeTidakCocok, tulisCbtCsv, tulisCbtXlsx } from '../core/user';
 import { ambilHasilMapel, catatPeserta, saatHasilMapelBerubah, unduhCsv, unduhFile } from './simpan';
 import { daftarPesan, el, tabel } from './tabel';
 
@@ -20,6 +20,8 @@ interface Status {
   /** '' = semua sheet. */
   sheetDipilih: string;
   tampilkanPassword: boolean;
+  /** Kata kunci pencarian di pratinjau (tidak memengaruhi file unduhan). */
+  cari: string;
 }
 
 const BATAS_PRATINJAU = 200;
@@ -62,6 +64,7 @@ export function pasangTabUser(akar: HTMLElement): void {
     sheet: [],
     sheetDipilih: SEMUA,
     tampilkanPassword: false,
+    cari: '',
   };
 
   saatHasilMapelBerubah(() => {
@@ -69,7 +72,7 @@ export function pasangTabUser(akar: HTMLElement): void {
   });
 
   async function pilihFile(f: File): Promise<void> {
-    Object.assign(s, { namaFile: f.name, asli: [], peserta: [], peringatan: [], galat: [], sheet: [], sheetDipilih: SEMUA, tampilkanPassword: false });
+    Object.assign(s, { namaFile: f.name, asli: [], peserta: [], peringatan: [], galat: [], sheet: [], sheetDipilih: SEMUA, tampilkanPassword: false, cari: '' });
     try {
       const hasil = await bacaUser(await f.arrayBuffer(), f.name);
       s.asli = hasil.peserta;
@@ -181,7 +184,59 @@ export function pasangTabUser(akar: HTMLElement): void {
   }
 
   function kartuPratinjau(cbt: PesertaCBT[]): HTMLElement {
-    const tampil = cbt.slice(0, BATAS_PRATINJAU);
+    const wadahTabel = el('div', { id: 'hasil-cari-user' });
+    const isiTabel = () => {
+      const cocok = cariPeserta(cbt, s.cari);
+      const tampil = cocok.slice(0, BATAS_PRATINJAU);
+      const jumlah = s.cari.trim()
+        ? `${cocok.length} dari ${cbt.length} peserta cocok dengan "${s.cari.trim()}".`
+        : `${cbt.length} peserta.`;
+      wadahTabel.replaceChildren(
+        ...[
+          cocok.length
+            ? tabel(
+                ['Nama Peserta', 'Nama Rombel', 'Kelas / Jurusan', 'Ruang', 'Kel. Sesi', 'Username', 'Password'].map((judul) => ({
+                  judul,
+                  angka: judul === 'Ruang' || judul === 'Kel. Sesi',
+                })),
+                tampil.map((p) => ({
+                  sel: [p.namaPeserta, p.namaRombel, p.kelasJurusan, p.ruang, p.kelSesi, p.username, s.tampilkanPassword ? p.password : p.password ? '••••••' : ''],
+                })),
+                'Pratinjau data peserta untuk CBTAdmin',
+              )
+            : el('p', { class: 'kosong' }, 'Tidak ada peserta yang cocok.'),
+          el(
+            'p',
+            { class: 'jumlah', role: 'status' },
+            jumlah +
+              (cocok.length > BATAS_PRATINJAU ? ` Pratinjau menampilkan ${BATAS_PRATINJAU} baris pertama.` : '') +
+              (s.cari.trim() ? ' Pencarian hanya menyaring pratinjau; file unduhan tetap berisi semua peserta.' : cbt.length > BATAS_PRATINJAU ? ' File unduhan berisi semuanya.' : ''),
+          ),
+        ],
+      );
+    };
+    isiTabel();
+
+    const cari = el('input', {
+      type: 'search',
+      id: 'cari-user',
+      placeholder: 'Cari nama, no ujian, atau kelas…',
+      size: '34',
+      autocomplete: 'off',
+    });
+    cari.value = s.cari;
+    cari.addEventListener('input', () => {
+      s.cari = cari.value;
+      isiTabel();
+    });
+    const bersihkan = el('button', { class: 'tombol', type: 'button', hidden: !s.cari }, 'Hapus pencarian');
+    bersihkan.addEventListener('click', () => {
+      s.cari = cari.value = '';
+      bersihkan.hidden = true;
+      isiTabel();
+      cari.focus();
+    });
+    cari.addEventListener('input', () => (bersihkan.hidden = !cari.value));
     const tombolPassword = el('button', { class: 'tombol', type: 'button', 'aria-pressed': String(s.tampilkanPassword) }, s.tampilkanPassword ? 'Sembunyikan password' : 'Tampilkan password');
     tombolPassword.addEventListener('click', () => {
       s.tampilkanPassword = !s.tampilkanPassword;
@@ -225,25 +280,18 @@ export function pasangTabUser(akar: HTMLElement): void {
           s.peringatan.filter((p) => !s.sheetDipilih || p.lokasi === s.sheetDipilih || p.lokasi?.startsWith(`${s.sheetDipilih} baris `)),
         ),
       ),
+      el(
+        'div',
+        { class: 'baris-kontrol', role: 'search' },
+        el('label', { for: 'cari-user' }, 'Cari peserta:'),
+        cari,
+        bersihkan,
+      ),
       el('div', { class: 'baris-kontrol' }, tombolPassword, ulang),
       adaYangDibuat
         ? el('p', { class: 'bantu' }, 'Password dibuat acak saat file di-upload. Simpan file hasil unduhan: password yang sama tidak bisa dibuat lagi.')
         : null,
-      tabel(
-        ['Nama Peserta', 'Nama Rombel', 'Kelas / Jurusan', 'Ruang', 'Kel. Sesi', 'Username', 'Password'].map((judul) => ({
-          judul,
-          angka: judul === 'Ruang' || judul === 'Kel. Sesi',
-        })),
-        tampil.map((p) => ({
-          sel: [p.namaPeserta, p.namaRombel, p.kelasJurusan, p.ruang, p.kelSesi, p.username, s.tampilkanPassword ? p.password : p.password ? '••••••' : ''],
-        })),
-        'Pratinjau data peserta untuk CBTAdmin',
-      ),
-      el(
-        'p',
-        { class: 'jumlah' },
-        `${cbt.length} peserta.${cbt.length > BATAS_PRATINJAU ? ` Pratinjau menampilkan ${BATAS_PRATINJAU} baris pertama; file unduhan berisi semuanya.` : ''}`,
-      ),
+      wadahTabel,
       el('div', { class: 'baris-kontrol' }, unduh, unduhCsvTombol, galatUnduh),
       el('p', { class: 'bantu' }, 'File CSV berisi baris judul kolom lalu data peserta, tanpa baris petunjuk template.'),
     );
