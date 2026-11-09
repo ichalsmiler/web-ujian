@@ -50,6 +50,11 @@ export function saatKamusBerubah(f: Pendengar): () => void {
 
 const MIME_XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
+/** Unduh teks CSV (UTF-8). */
+export function unduhCsv(nama: string, isi: string): void {
+  unduhFile(nama, new TextEncoder().encode(isi), 'text/csv;charset=utf-8');
+}
+
 export function unduhFile(nama: string, isi: ArrayBuffer | Uint8Array, mime = MIME_XLSX): void {
   const blob = new Blob([isi as BlobPart], { type: mime });
   const url = URL.createObjectURL(blob);

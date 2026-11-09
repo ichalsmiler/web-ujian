@@ -4,8 +4,8 @@
 
 import templateUrl from '../assets/template-cbtadmin.xlsx?url';
 import { GalatFormat, type PesertaCBT, type PesertaMasuk, type Peringatan } from '../core/tipe';
-import { bacaUser, isiPassword, keCbt, kodeTidakCocok, tulisCbtXlsx } from '../core/user';
-import { ambilHasilMapel, saatHasilMapelBerubah, unduhFile } from './simpan';
+import { bacaUser, isiPassword, keCbt, kodeTidakCocok, tulisCbtCsv, tulisCbtXlsx } from '../core/user';
+import { ambilHasilMapel, saatHasilMapelBerubah, unduhCsv, unduhFile } from './simpan';
 import { daftarPesan, el, tabel } from './tabel';
 
 interface Status {
@@ -208,6 +208,10 @@ export function pasangTabUser(akar: HTMLElement): void {
       }
     });
 
+    const namaCsv = namaFile.replace(/\.xlsx$/, '.csv');
+    const unduhCsvTombol = el('button', { class: 'tombol', type: 'button', id: 'tombol-unduh-user-csv' }, `Unduh ${namaCsv}`);
+    unduhCsvTombol.addEventListener('click', () => unduhCsv(namaCsv, tulisCbtCsv(cbt)));
+
     const langkah = s.sheet.length > 1 ? '3' : '2';
     return el(
       'div',
@@ -237,7 +241,8 @@ export function pasangTabUser(akar: HTMLElement): void {
         { class: 'jumlah' },
         `${cbt.length} peserta.${cbt.length > BATAS_PRATINJAU ? ` Pratinjau menampilkan ${BATAS_PRATINJAU} baris pertama; file unduhan berisi semuanya.` : ''}`,
       ),
-      el('div', { class: 'baris-kontrol' }, unduh, galatUnduh),
+      el('div', { class: 'baris-kontrol' }, unduh, unduhCsvTombol, galatUnduh),
+      el('p', { class: 'bantu' }, 'File CSV berisi baris judul kolom lalu data peserta, tanpa baris petunjuk template.'),
     );
   }
 

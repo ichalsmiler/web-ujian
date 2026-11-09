@@ -1,6 +1,7 @@
 // Menyusun dan menulis file mapel berformat MAPEL FIX.xlsx.
 
 import ExcelJS from 'exceljs';
+import Papa from 'papaparse';
 import { cariMapel } from './kamus';
 import type { BarisMapel, HasilCocok, Kamus } from './tipe';
 
@@ -60,4 +61,15 @@ export function susunBarisMapelSemua(perTingkat: { tingkat: string; hasil: Hasil
     return susunBarisMapel(p.hasil, t, kamus).map((b, i) => ({ b, rank, i }));
   });
   return semua.sort((x, y) => x.b.category - y.b.category || x.rank - y.rank || x.i - y.i).map((x) => x.b);
+}
+
+/**
+ * CSV untuk upload mapel (mis. Moodle "Upload courses"): header category,format,shortname,fullname,
+ * pemisah koma, UTF-8 tanpa BOM, akhir baris CRLF. Nilai berisi koma/kutip otomatis dikutip.
+ */
+export function tulisMapelCsv(baris: BarisMapel[]): string {
+  return Papa.unparse(
+    { fields: ['category', 'format', 'shortname', 'fullname'], data: baris.map((b) => [b.category, b.format, b.shortname, b.fullname]) },
+    { newline: '\r\n' },
+  );
 }

@@ -318,3 +318,19 @@ export function kodeTidakCocok(
     tidakCocok: [...hitung].map(([kode, jumlahPeserta]) => ({ kode, jumlahPeserta })).sort((a, b) => a.kode.localeCompare(b.kode)),
   };
 }
+
+export const HEADER_CBT = ['Nama Peserta', 'Nama Rombel', 'Kelas / Jurusan', 'Ruang', 'Kel. Sesi', 'Username', 'Password'];
+
+/**
+ * CSV data user CBTAdmin: satu baris header (sama dengan baris 9 template) lalu data.
+ * Baris judul/petunjuk template tidak ikut. Pemisah koma, UTF-8 tanpa BOM, akhir baris CRLF.
+ */
+export function tulisCbtCsv(peserta: PesertaCBT[]): string {
+  return Papa.unparse(
+    {
+      fields: HEADER_CBT,
+      data: peserta.map((p) => [p.namaPeserta, p.namaRombel, p.kelasJurusan, p.ruang ?? '', p.kelSesi ?? '', p.username, p.password]),
+    },
+    { newline: '\r\n' },
+  );
+}

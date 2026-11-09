@@ -3,10 +3,10 @@
 
 import { bacaJadwal, daftarSheet, urutTingkat } from '../core/jadwal';
 import { cocokkanJadwal, kunciPilihan, tambahAlias, tambahMapel } from '../core/kamus';
-import { susunBarisMapel, susunBarisMapelSemua, tulisMapelXlsx, urutGabung } from '../core/mapel';
+import { susunBarisMapel, susunBarisMapelSemua, tulisMapelCsv, tulisMapelXlsx, urutGabung } from '../core/mapel';
 import { formatTanggal } from '../core/tanggal';
 import { GalatFormat, type HasilCocok, type JadwalUjian, type Kamus, type Peringatan, type PilihanMapel } from '../core/tipe';
-import { catatHasilMapel, muatKamus, muatPilihan, saatKamusBerubah, simpanKamus, simpanPilihan, unduhFile } from './simpan';
+import { catatHasilMapel, muatKamus, muatPilihan, saatKamusBerubah, simpanKamus, simpanPilihan, unduhCsv, unduhFile } from './simpan';
 import { daftarPesan, el, tabel, type BarisTabel } from './tabel';
 
 interface Status {
@@ -307,6 +307,10 @@ export function pasangTabJadwal(akar: HTMLElement): void {
       }
     });
 
+    const namaCsv = namaFile.replace(/\.xlsx$/, '.csv');
+    const unduhCsvTombol = el('button', { class: 'tombol', type: 'button', id: 'tombol-unduh-csv', disabled: unduh.disabled }, `Unduh ${namaCsv}`);
+    unduhCsvTombol.addEventListener('click', () => unduhCsv(namaCsv, tulisMapelCsv(baris)));
+
     return el(
       'div',
       { class: 'kartu', id: 'kartu-hasil' },
@@ -320,7 +324,7 @@ export function pasangTabJadwal(akar: HTMLElement): void {
         `Hasil konversi mapel ${label}`,
       ),
       el('p', { class: 'jumlah' }, `${baris.length} mapel dalam ${new Set(baris.map((b) => b.category)).size} hari.`),
-      el('div', { class: 'baris-kontrol' }, unduh),
+      el('div', { class: 'baris-kontrol' }, unduh, unduhCsvTombol),
     );
   }
 
