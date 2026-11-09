@@ -5,7 +5,7 @@ import { bacaFixture } from './bantu';
 
 const template = bacaFixture('template-cbtadmin.xlsx');
 const { peserta } = await bacaUser(bacaFixture('users-sample.csv'), 'users-sample.csv');
-const cbt = keCbt(peserta, { kelasJurusan: 'tingkat' });
+const cbt = keCbt(peserta);
 
 async function muat(buf: ArrayBuffer): Promise<ExcelJS.Worksheet> {
   const wb = new ExcelJS.Workbook();
@@ -42,7 +42,7 @@ describe('tulisCbtXlsx', async () => {
   it('data mulai baris 10, urut sesuai input', () => {
     expect(hasil.rowCount).toBe(9 + cbt.length);
     expect((hasil.getRow(10).values as unknown[]).slice(1)).toEqual([
-      'Siswa Contoh Satu', 'XII-1', 'XII', 1, undefined, '00-000-0001', 'AB12CD',
+      'Siswa Contoh Satu', 'XII-1', 'XII-1', 1, 1, '00-000-0001', 'AB12CD',
     ]);
     for (let i = 0; i < cbt.length; i++) {
       expect(hasil.getCell(10 + i, 6).value).toBe(cbt[i].username);

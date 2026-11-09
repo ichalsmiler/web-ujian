@@ -91,6 +91,8 @@ export interface PesertaMasuk {
   /** Nilai kolom course1..course14 yang tidak kosong. */
   course: string[];
   baris: number;
+  /** Nama sheet sumber (format DATA PESERTA). */
+  sheet?: string;
 }
 
 export interface PesertaCBT {
@@ -98,13 +100,9 @@ export interface PesertaCBT {
   namaRombel: string;
   kelasJurusan: string;
   ruang: number | null;
-  kelSesi: null;
+  kelSesi: number | null;
   username: string;
   password: string;
-}
-
-export interface Pengaturan {
-  kelasJurusan: 'tingkat' | 'rombel';
 }
 
 /** Galat format file yang harus ditampilkan ke operator (pesan Bahasa Indonesia). */

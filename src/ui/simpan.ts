@@ -2,10 +2,9 @@
 // Data siswa dan file jadwal TIDAK pernah disimpan di sini.
 
 import { kamusAwal } from '../core/kamus';
-import type { Kamus, Pengaturan, PilihanMapel } from '../core/tipe';
+import type { Kamus, PilihanMapel } from '../core/tipe';
 
 const KUNCI_KAMUS = 'web-ujian.kamus';
-const KUNCI_PENGATURAN = 'web-ujian.pengaturan';
 
 type Pendengar = (kamus: Kamus) => void;
 const pendengar = new Set<Pendengar>();
@@ -47,26 +46,6 @@ export function simpanKamus(kamus: Kamus): void {
 export function saatKamusBerubah(f: Pendengar): () => void {
   pendengar.add(f);
   return () => pendengar.delete(f);
-}
-
-export function muatPengaturan(): Pengaturan {
-  try {
-    const data = JSON.parse(localStorage.getItem(KUNCI_PENGATURAN) ?? 'null') as Partial<Pengaturan> | null;
-    if (data && (data.kelasJurusan === 'tingkat' || data.kelasJurusan === 'rombel')) {
-      return { kelasJurusan: data.kelasJurusan };
-    }
-  } catch {
-    // abaikan
-  }
-  return { kelasJurusan: 'tingkat' };
-}
-
-export function simpanPengaturan(p: Pengaturan): void {
-  try {
-    localStorage.setItem(KUNCI_PENGATURAN, JSON.stringify(p));
-  } catch {
-    // abaikan
-  }
 }
 
 const MIME_XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';

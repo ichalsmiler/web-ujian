@@ -15,7 +15,8 @@
 | `jadwal.xlsx` | **Input 1**: jadwal ujian dalam Excel. Sheet `Jadwal SMT Gsl 2026 EDIT` (23 Nov – 3 Des 2026 + susulan 4 Des) dan sheet lama `Jadwal SMT Gsl 2025`. Header di baris 4: `HARI/TGL`, `JAM`, `WAKTU`, `KELAS XII`, `WAKTU`, `KELAS X`, `WAKTU`, `KELAS XI`. Tiap hari memakai 2 baris (sesi I dan II); nama hari ada di baris sesi I, tanggal di baris sesi II (bisa berupa rumus `=A6+1`). Satu sel bisa berisi beberapa mapel dipisah koma |
 | `jadwal.pdf` | Versi cetak/scan dari jadwal yang sama (hanya referensi, tidak dibaca aplikasi) |
 | `MAPEL FIX.xlsx` | **Target output 1**: daftar mapel dengan kolom `category`, `format`, `shortname`, `fullname` |
-| `USER MOODLE.csv` | Contoh **input 2**: data peserta (pemisah `;`) dengan kolom `username;password;firstname;lastname;email;department;address;course1..course14` |
+| `DATA PESERTA NO UJIAN PAS TA. 2026-2027.xlsx` | **Input 2** (utama): daftar peserta per kelas — sheet `KLS. X`, `KLS. XI`, `KLS. XII`; header baris 6–7 `URT, UJIAN, NIS, NISN, NAMA SISWA, JK, KELAS, RG.`; data mulai baris 8 |
+| `USER MOODLE.csv` | Format lama input 2 (masih didukung): data peserta (pemisah `;`) dengan kolom `username;password;firstname;lastname;email;department;address;course1..course14` |
 | `user cbtadmin.xlsx` | **Target output 2**: template upload user CBTAdmin (baris judul + petunjuk, lalu header `Nama Peserta`, `Nama Rombel`, `Kelas / Jurusan`, `Ruang`, `Kel. Sesi`, `Username`, `Password`) |
 
 ## Clarifications
@@ -31,6 +32,10 @@
 - Q: Urutan pilihan tingkat? → A: Kelas X, XI, lalu XII.
 - Q: Konversi semua kelas sekaligus? → A: Ya, satu file. `category` = hari ke-N
   (hari 1 = category 1); di setiap category urutan mapel kelas XII, X, lalu XI.
+- Q: Sumber data user CBTAdmin? → A: File DATA PESERTA NO UJIAN. Nama Rombel dan
+  Kelas / Jurusan dari kolom KELAS, Ruang dari RG., Kel. Sesi = 1, Username dari
+  UJIAN, Password acak 2 huruf kapital + 2 angka + 2 huruf kapital (mis. HJ86KL).
+  Ini sekaligus menjawab pertanyaan `Kelas / Jurusan` dari sesi 2026-11-05.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -85,17 +90,26 @@ format persis `user cbtadmin.xlsx`, termasuk baris judul dan petunjuknya.
 **Why this priority**: Dibutuhkan setelah mapel tersedia, dan bisa dipakai
 terpisah dari fitur jadwal.
 
-**Independent Test**: Upload `USER MOODLE.csv`, unduh hasilnya, buka di Excel, dan
-pastikan file bisa langsung di-upload ke CBTAdmin.
+**Independent Test**: Upload `DATA PESERTA NO UJIAN PAS TA. 2026-2027.xlsx`, unduh
+hasilnya, buka di Excel, dan pastikan file bisa langsung di-upload ke CBTAdmin.
 
 **Acceptance Scenarios**:
 
-1. **Given** file `USER MOODLE.csv` berisi 8 peserta, **When** di-upload, **Then**
-   pratinjau menampilkan 8 baris dengan pemetaan: `Nama Peserta` ← `firstname`,
-   `Nama Rombel` ← `department` (spasi di awal/akhir dibuang, mis. `XII-1`),
-   `Kelas / Jurusan` ← [NEEDS CLARIFICATION: tingkat (`XII`) atau rombel (`XII-1`)?],
-   `Ruang` ← `address`, `Kel. Sesi` kosong, `Username` ← `username`,
-   `Password` ← `password`.
+1. **Given** file DATA PESERTA (satu sheet per kelas `KLS. X`, `KLS. XI`,
+   `KLS. XII`; header `URT | UJIAN | NIS | NISN | NAMA SISWA | JK | KELAS | RG.`
+   di baris 6–7), **When** di-upload, **Then** pratinjau menampilkan peserta dari
+   semua sheet dengan pemetaan: `Nama Peserta` ← `NAMA SISWA` (spasi dirapikan),
+   `Nama Rombel` ← `KELAS`, `Kelas / Jurusan` ← `KELAS`, `Ruang` ← `RG.`,
+   `Kel. Sesi` = `1` untuk semua, `Username` ← `UJIAN`, `Password` = acak 6
+   karakter: 2 huruf kapital, 2 angka, 2 huruf kapital (mis. `HJ86KL`), unik
+   dalam satu file.
+1a. **Given** nomor ujian tanpa nama siswa, **When** di-upload, **Then** baris itu
+   dilewati dengan keterangan.
+1b. **Given** nilai KELAS tidak sesuai nama sheet (mis. `X-1` di sheet `KLS. XI`),
+   **When** di-upload, **Then** aplikasi memberi peringatan, tetapi tetap memakai
+   nilai KELAS apa adanya.
+1c. **Given** file berisi lebih dari satu sheet peserta, **Then** operator bisa
+   memilih semua sheet atau satu sheet saja.
 2. **Given** hasil sudah tampil, **When** operator menekan Unduh, **Then** file
    memuat 8 baris judul/petunjuk yang sama persis dengan template, header di
    baris 9, dan data mulai baris 10.
@@ -195,9 +209,12 @@ X, lalu cek hasil konversi memakai kode tersebut.
 
 **User → CBTAdmin**
 
-- **FR-012**: Operator MUST bisa meng-upload file peserta `.csv` (pemisah `;`
-  atau `,`) atau `.xlsx` dengan kolom seperti `USER MOODLE.csv`.
+- **FR-012**: Operator MUST bisa meng-upload file peserta `.xlsx` berformat
+  DATA PESERTA NO UJIAN. File lama seperti `USER MOODLE.csv` (`.csv` pemisah `;`
+  atau `,`) tetap diterima; password di file itu dipakai apa adanya.
 - **FR-013**: Aplikasi MUST memetakan kolom sesuai Acceptance Scenario US2-1.
+  Password acak dibuat sekali saat upload, sehingga pratinjau sama dengan file
+  unduhan; operator bisa menekan "Buat ulang password".
 - **FR-014**: File hasil MUST memuat baris judul dan 7 baris petunjuk dari
   template `user cbtadmin.xlsx` tanpa perubahan, header di baris 9, data mulai
   baris 10.

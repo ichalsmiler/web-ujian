@@ -2,7 +2,7 @@
 
 **Feature**: [spec.md](./spec.md) | **Research**: [research.md](./research.md)
 
-Semua data hidup di memori browser. Hanya `Kamus` dan `Pengaturan` yang disimpan
+Semua data hidup di memori browser. Hanya `Kamus` dan pilihan operator di tab Jadwal yang disimpan
 ke `localStorage`.
 
 ## Mapel (entri kamus)
@@ -96,14 +96,17 @@ setelah di-trim.
 
 | Kolom template | Isi |
 | --- | --- |
-| `Nama Peserta` | `trim(firstname)`; jika `lastname` berisi teks selain nama rombel, ditambahkan dengan spasi |
-| `Nama Rombel` | `trim(department)` → `XII-1` |
-| `Kelas / Jurusan` | Pengaturan `kelasJurusan`: `tingkat` → bagian romawi sebelum `-` (`XII`); `rombel` → sama dengan Nama Rombel |
-| `Ruang` | `trim(address)` sebagai angka jika berupa angka bulat, selain itu kosong |
-| `Kel. Sesi` | kosong |
-| `Username` | `trim(username)` |
-| `Password` | `trim(password)`, disimpan sebagai **teks** (supaya `07AB12` atau `0123` tidak berubah) |
+| `Nama Peserta` | `NAMA SISWA` (format lama: `firstname`, ditambah `lastname` jika berbeda dari rombel), spasi berlebih dirapikan |
+| `Nama Rombel` | `KELAS` (format lama: `department`) apa adanya, mis. `X-1` |
+| `Kelas / Jurusan` | sama dengan Nama Rombel (`KELAS`) |
+| `Ruang` | `RG.` (format lama: `address`) sebagai angka jika berupa angka bulat, selain itu kosong |
+| `Kel. Sesi` | `1` untuk semua peserta |
+| `Username` | nomor `UJIAN` (format lama: `username`), disimpan sebagai teks |
+| `Password` | acak 6 karakter `[A-Z]{2}[0-9]{2}[A-Z]{2}` (mis. `HJ86KL`) dari `crypto.getRandomValues`, unik dalam satu file, dibuat sekali saat upload; format lama memakai `password` dari file. Disimpan sebagai **teks** |
 
+Format DATA PESERTA: setiap sheet yang punya header `UJIAN`, `NAMA SISWA`, `KELAS` dibaca (header berulang dilewati).
+Nomor ujian tanpa nama dilewati sebagai keterangan (`info`). Jika tingkat di KELAS ≠ tingkat di nama sheet (`KLS. XI`),
+muncul `peringatan` per sheet, tetapi nilai KELAS tetap dipakai apa adanya.
 Baris dengan `username` kosong dilewati dan dicatat sebagai peringatan.
 
 ### Peringatan
@@ -112,7 +115,3 @@ Baris dengan `username` kosong dilewati dan dicatat sebagai peringatan.
 dengan `lokasi` berupa sel/baris sumber (mis. `D14`, `baris 5`). Semua pesan
 ditulis dalam Bahasa Indonesia.
 
-## Pengaturan
-
-`{ kelasJurusan: 'tingkat' | 'rombel' }`, disimpan di `localStorage` dengan kunci
-`web-ujian.pengaturan`.

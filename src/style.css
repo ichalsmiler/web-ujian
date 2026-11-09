@@ -72,6 +72,3 @@ td.angka { text-align: right; font-variant-numeric: tabular-nums; }
 .kosong { color: var(--redup); }
 .bantu { color: var(--redup); font-size: 0.9rem; margin: 0.35rem 0 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-
-fieldset.polos { border: none; margin: 0; padding: 0; }
-fieldset.polos legend { padding: 0; margin-bottom: 0.4rem; }

@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain — 1 pertanyaan menunggu jawaban: isi kolom `Kelas / Jurusan` (US2-1). Input jadwal (FR-001) dan prefix (FR-008) sudah dijawab 2026-11-05
+- [x] No [NEEDS CLARIFICATION] markers remain — Kelas / Jurusan dijawab 2026-11-09 (= kolom KELAS)
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
