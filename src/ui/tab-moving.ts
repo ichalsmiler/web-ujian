@@ -6,7 +6,7 @@ import { urutTingkat } from '../core/jadwal';
 import { PETA_MAPEL_MOVING, bacaFileMoving, cocokkanMoving, kunciPasangan, movingPerSiswa, pasanganGanda, type KelompokMoving, type PasanganMoving, type TambahanManual } from '../core/moving';
 import { tingkatPeserta } from '../core/moodle';
 import { GalatFormat, type PesertaMasuk, type Peringatan } from '../core/tipe';
-import { ambilPeserta, catatMoving, muatKamus, saatKamusBerubah, saatPesertaBerubah } from './simpan';
+import { ambilPeserta, catatMoving, muatKamus, muatMoving, saatKamusBerubah, saatPesertaBerubah, simpanMoving } from './simpan';
 import { daftarPesan, el, tabel } from './tabel';
 
 const BATAS_BARIS = 200;
@@ -31,13 +31,10 @@ function labelSiswa(p: PesertaMasuk): string {
 }
 
 export function pasangTabMoving(akar: HTMLElement): void {
-  const s: Status = { kelompok: [], galat: [], kodeDiganti: {}, pilihan: {}, manual: [], saring: 'perlu' };
+  const tersimpan = muatMoving();
+  const s: Status = { kelompok: [], galat: [], ...tersimpan, saring: 'perlu' };
 
-  saatPesertaBerubah(() => {
-    s.pilihan = {};
-    s.manual = [];
-    gambar();
-  });
+  saatPesertaBerubah(() => gambar());
   saatKamusBerubah(() => gambar());
 
   function kelompokAktif(): KelompokMoving[] {
@@ -77,10 +74,16 @@ export function pasangTabMoving(akar: HTMLElement): void {
       if (input.files?.length) void pilihFile(input.files);
       input.value = '';
     });
-    const hapus = el('button', { class: 'tombol', type: 'button' }, 'Hapus semua file');
+    const hapus = el('button', { class: 'tombol', type: 'button' }, 'Lepas semua file');
     hapus.addEventListener('click', () => {
-      if (!confirm('Hapus semua file moving dan pilihan yang sudah dibuat?')) return;
-      Object.assign(s, { kelompok: [], galat: [], pilihan: {}, manual: [] });
+      Object.assign(s, { kelompok: [], galat: [] }); // pilihan & entri manual tetap tersimpan
+      gambar();
+    });
+    const jumlahTersimpan = Object.keys(s.pilihan).length + s.manual.length;
+    const hapusSimpanan = el('button', { class: 'tombol', type: 'button', id: 'hapus-simpanan-moving', disabled: jumlahTersimpan === 0 }, `Hapus pilihan tersimpan (${jumlahTersimpan})`);
+    hapusSimpanan.addEventListener('click', () => {
+      if (!confirm(`Hapus ${jumlahTersimpan} pilihan pencocokan dan entri manual yang tersimpan di browser ini? Ini tidak bisa dibatalkan.`)) return;
+      Object.assign(s, { pilihan: {}, manual: [], kodeDiganti: {} });
       gambar();
     });
 
@@ -127,6 +130,7 @@ export function pasangTabMoving(akar: HTMLElement): void {
         el('label', { class: 'tombol', for: 'file-moving' }, s.kelompok.length ? 'Tambah / ganti file…' : 'Pilih file moving (.xlsx, bisa banyak sekaligus)…'),
         input,
         s.kelompok.length ? hapus : null,
+        hapusSimpanan,
       ),
       el('p', { class: 'bantu' }, 'Format seperti "DAFTAR HADIR KELAS MOVING XI BIO.xlsx": satu sheet per kelompok, judul kelompok di baris 2, kolom NAMA MURID dan KELAS.'),
       daftarPesan(s.galat),
@@ -219,7 +223,7 @@ export function pasangTabMoving(akar: HTMLElement): void {
     if (perlu) pesan.push({ tingkat: 'galat', pesan: `${perlu} nama belum dicocokkan. Pilih siswanya di tabel merah, atau abaikan barisnya.` });
     pesan.push({
       tingkat: 'info',
-      pesan: 'Pilihan di sini hanya tersimpan selama halaman terbuka (data siswa tidak disimpan di browser). Selesaikan lalu unduh file Moodle sebelum menutup halaman.',
+      pesan: 'Pilihan dan entri manual tersimpan di browser komputer ini, jadi tidak hilang saat halaman dimuat ulang (upload ulang file peserta dan file moving untuk melanjutkan). Di komputer bersama, tekan "Hapus pilihan tersimpan" setelah selesai.',
     });
 
     return el(
@@ -399,6 +403,7 @@ export function pasangTabMoving(akar: HTMLElement): void {
     const pasangan = adaPeserta && s.kelompok.length ? hitungPasangan() : [];
     const moving = movingPerSiswa(pasangan, s.pilihan, s.manual);
     catatMoving(moving);
+    simpanMoving({ pilihan: s.pilihan, manual: s.manual, kodeDiganti: s.kodeDiganti });
     akar.replaceChildren(
       ...[
         kartuUpload(),

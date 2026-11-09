@@ -189,3 +189,45 @@ export function saatMovingBerubah(f: PendengarMoving): () => void {
   pendengarMoving.add(f);
   return () => pendengarMoving.delete(f);
 }
+
+// ---- Pilihan kelas moving (disimpan atas permintaan sekolah 2026-11-09) ----
+// Berisi nomor ujian dan kunci nama siswa, hanya di browser komputer ini. Ada tombol untuk menghapusnya.
+
+const KUNCI_MOVING = 'web-ujian.moving.v1';
+
+export interface SimpananMoving {
+  pilihan: Record<string, string>;
+  manual: { username: string; shortname: string }[];
+  kodeDiganti: Record<string, string>;
+}
+
+const kosongMoving = (): SimpananMoving => ({ pilihan: {}, manual: [], kodeDiganti: {} });
+
+function rekamanTeks(x: unknown): x is Record<string, string> {
+  return !!x && typeof x === 'object' && !Array.isArray(x) && Object.values(x).every((v) => typeof v === 'string');
+}
+
+export function muatMoving(): SimpananMoving {
+  try {
+    const d = JSON.parse(localStorage.getItem(KUNCI_MOVING) ?? 'null') as Partial<SimpananMoving> | null;
+    if (!d) return kosongMoving();
+    return {
+      pilihan: rekamanTeks(d.pilihan) ? d.pilihan : {},
+      manual: Array.isArray(d.manual)
+        ? d.manual.filter((m): m is SimpananMoving['manual'][number] => !!m && typeof m.username === 'string' && typeof m.shortname === 'string')
+        : [],
+      kodeDiganti: rekamanTeks(d.kodeDiganti) ? d.kodeDiganti : {},
+    };
+  } catch {
+    return kosongMoving();
+  }
+}
+
+export function simpanMoving(d: SimpananMoving): void {
+  try {
+    if (!Object.keys(d.pilihan).length && !d.manual.length && !Object.keys(d.kodeDiganti).length) localStorage.removeItem(KUNCI_MOVING);
+    else localStorage.setItem(KUNCI_MOVING, JSON.stringify(d));
+  } catch {
+    // abaikan (mis. mode privat)
+  }
+}

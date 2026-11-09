@@ -283,8 +283,12 @@ X, lalu cek hasil konversi memakai kode tersebut.
   template `user cbtadmin.xlsx` tanpa perubahan, header di baris 9, data mulai
   baris 10.
 - **FR-015**: Kolom `course1..course14` MUST diabaikan dalam output CBTAdmin.
-- **FR-015b**: Pilihan pencocokan nama kelas moving hanya disimpan di memori
-  selama halaman terbuka (data siswa tidak disimpan di browser).
+- **FR-015b**: Pilihan pencocokan nama kelas moving, entri manual, dan kode mapel
+  yang diganti MUST disimpan di localStorage browser (permintaan sekolah
+  2026-11-09), sehingga tidak hilang saat halaman dimuat ulang. Ini pengecualian
+  yang disengaja dari aturan "data siswa tidak disimpan": isinya nomor ujian dan
+  kunci nama, tetap hanya di komputer itu. Tombol "Hapus pilihan tersimpan" MUST
+  tersedia untuk komputer bersama. File moving dan file peserta tetap tidak disimpan.
 - **FR-015a**: Tingkat siswa untuk course diambil dari nama sheet (`KLS. XI`),
   atau dari kelas jika tidak ada sheet, sehingga KELAS yang belum diperbarui tidak
   membuat siswa XI mendapat course kelas X.
