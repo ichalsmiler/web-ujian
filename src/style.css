@@ -72,3 +72,10 @@ td.angka { text-align: right; font-variant-numeric: tabular-nums; }
 .kosong { color: var(--redup); }
 .bantu { color: var(--redup); font-size: 0.9rem; margin: 0.35rem 0 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.grid-kecuali { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; margin: 0.5rem 0 0.75rem; }
+.kolom-kecuali { display: flex; flex-direction: column; gap: 0.25rem; }
+.kolom-kecuali label { font-weight: 600; }
+textarea.daftar-kode { font: 0.85rem/1.4 Consolas, "Courier New", monospace; padding: 0.4rem 0.5rem; border: 1px solid var(--garis); border-radius: 6px; resize: vertical; width: 100%; }
+textarea.daftar-kode:focus-visible { outline: 2px solid var(--utama); outline-offset: 2px; }
+.ringkas-course { font-size: 0.85rem; color: var(--redup); white-space: nowrap; cursor: help; }

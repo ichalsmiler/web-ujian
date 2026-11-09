@@ -5,7 +5,7 @@
 import templateUrl from '../assets/template-cbtadmin.xlsx?url';
 import { GalatFormat, type PesertaCBT, type PesertaMasuk, type Peringatan } from '../core/tipe';
 import { bacaUser, isiPassword, keCbt, kodeTidakCocok, tulisCbtCsv, tulisCbtXlsx } from '../core/user';
-import { ambilHasilMapel, saatHasilMapelBerubah, unduhCsv, unduhFile } from './simpan';
+import { ambilHasilMapel, catatPeserta, saatHasilMapelBerubah, unduhCsv, unduhFile } from './simpan';
 import { daftarPesan, el, tabel } from './tabel';
 
 interface Status {
@@ -76,9 +76,11 @@ export function pasangTabUser(akar: HTMLElement): void {
       s.peserta = isiPassword(hasil.peserta);
       s.peringatan = hasil.peringatan;
       s.sheet = hasil.sheet;
+      catatPeserta({ namaFile: f.name, peserta: s.peserta });
     } catch (e) {
       const pesan = e instanceof GalatFormat ? e.message : `Terjadi kesalahan tak terduga: ${String(e)}`;
       s.galat = [{ tingkat: 'galat', pesan }];
+      catatPeserta(null);
     }
     gambar();
   }
@@ -190,6 +192,7 @@ export function pasangTabUser(akar: HTMLElement): void {
     ulang?.addEventListener('click', () => {
       if (!confirm('Buat ulang semua password acak? Password yang sedang tampil akan diganti.')) return;
       s.peserta = isiPassword(s.asli);
+      catatPeserta({ namaFile: s.namaFile, peserta: s.peserta });
       gambar();
     });
 

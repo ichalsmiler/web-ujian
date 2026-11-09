@@ -68,13 +68,13 @@ export interface HasilBacaUser {
 const normalHeader = (s: string) => s.toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim();
 
 /** Bagian romawi di depan nama rombel: "XII-1" → "XII". Jika tidak ada, '' . */
-function tingkatDariRombel(rombel: string): string {
+export function tingkatDariRombel(rombel: string): string {
   const m = /^([IVX]+)(?=$|[\s\-._/])/i.exec(rombel.trim());
   return m ? m[1].toUpperCase() : '';
 }
 
 /** "KLS. XI" → "XI"; '' jika nama sheet tidak berakhir dengan angka romawi. */
-function tingkatDariSheet(nama: string): string {
+export function tingkatDariSheet(nama: string): string {
   const m = /(?:^|[\s.])([IVX]+)\s*$/i.exec(nama.trim());
   return m ? m[1].toUpperCase() : '';
 }

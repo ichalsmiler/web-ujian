@@ -259,7 +259,10 @@ export function pasangTabJadwal(akar: HTMLElement): void {
     const semuaKelas = s.mode === 'semua';
     const daftar = semuaKelas ? urutGabung(j.tingkat) : [s.tingkat];
     const per = daftar.map((t) => ({ tingkat: t, hasil: cocokkanJadwal(j, t, s.kamus, s.pilihan[t] ?? {}) }));
-    for (const p of per) catatHasilMapel(p.tingkat, susunBarisMapel(p.hasil, p.tingkat, s.kamus).map((b) => b.shortname));
+    for (const p of per) {
+      const lengkap = !p.hasil.some((h) => h.status === 'tidak-dikenal');
+      catatHasilMapel(p.tingkat, susunBarisMapel(p.hasil, p.tingkat, s.kamus).map((b) => b.shortname), lengkap);
+    }
     const baris = semuaKelas ? susunBarisMapelSemua(per, s.kamus) : susunBarisMapel(per[0].hasil, s.tingkat, s.kamus);
     const hasil = per.flatMap((p) => p.hasil.map((h) => ({ ...h, tingkat: p.tingkat })));
     const tidakDikenal = hasil.filter((h) => h.status === 'tidak-dikenal');

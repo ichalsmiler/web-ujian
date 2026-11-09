@@ -1,5 +1,6 @@
 import './style.css';
 import { pasangTabJadwal } from './ui/tab-jadwal';
+import { pasangTabMoodle } from './ui/tab-moodle';
 import { pasangTabUser } from './ui/tab-user';
 
 function pasangTab(): void {
@@ -18,3 +19,4 @@ function pasangTab(): void {
 pasangTab();
 pasangTabJadwal(document.getElementById('tab-jadwal')!);
 pasangTabUser(document.getElementById('tab-user')!);
+pasangTabMoodle(document.getElementById('tab-moodle')!);

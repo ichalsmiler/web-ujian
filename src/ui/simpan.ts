@@ -2,7 +2,7 @@
 // Data siswa dan file jadwal TIDAK pernah disimpan di sini.
 
 import { kamusAwal } from '../core/kamus';
-import type { Kamus, PilihanMapel } from '../core/tipe';
+import type { Kamus, PesertaMasuk, PilihanMapel } from '../core/tipe';
 
 const KUNCI_KAMUS = 'web-ujian.kamus';
 
@@ -92,12 +92,22 @@ type PendengarMapel = (hasil: ReadonlyMap<string, readonly string[]>) => void;
 const hasilMapel = new Map<string, string[]>();
 const pendengarMapel = new Set<PendengarMapel>();
 
+/** Tingkat yang hasil konversinya masih punya nama mapel belum dikenal (baris merah). */
+const mapelBelumLengkap = new Set<string>();
+
 /** Dicatat tab Jadwal setiap kali pratinjau mapel suatu tingkat dibuat. */
-export function catatHasilMapel(tingkat: string, shortname: string[]): void {
+export function catatHasilMapel(tingkat: string, shortname: string[], lengkap = true): void {
   const lama = hasilMapel.get(tingkat);
-  if (lama && lama.length === shortname.length && lama.every((s, i) => s === shortname[i])) return;
+  const sama = lama && lama.length === shortname.length && lama.every((s, i) => s === shortname[i]);
+  if (sama && mapelBelumLengkap.has(tingkat) === !lengkap) return;
   hasilMapel.set(tingkat, [...shortname]);
+  if (lengkap) mapelBelumLengkap.delete(tingkat);
+  else mapelBelumLengkap.add(tingkat);
   for (const f of pendengarMapel) f(hasilMapel);
+}
+
+export function mapelLengkap(tingkat: string): boolean {
+  return hasilMapel.has(tingkat) && !mapelBelumLengkap.has(tingkat);
 }
 
 export function ambilHasilMapel(): ReadonlyMap<string, readonly string[]> {
@@ -107,4 +117,54 @@ export function ambilHasilMapel(): ReadonlyMap<string, readonly string[]> {
 export function saatHasilMapelBerubah(f: PendengarMapel): () => void {
   pendengarMapel.add(f);
   return () => pendengarMapel.delete(f);
+}
+
+// ---- Peserta CBTAdmin terakhir (hanya di memori, tidak pernah disimpan), dipakai tab User Moodle ----
+
+export interface DataPeserta {
+  namaFile: string;
+  /** Peserta dengan password yang sudah dibuat (sama dengan file CBTAdmin). */
+  peserta: PesertaMasuk[];
+}
+
+type PendengarPeserta = (d: DataPeserta | null) => void;
+let dataPeserta: DataPeserta | null = null;
+const pendengarPeserta = new Set<PendengarPeserta>();
+
+export function catatPeserta(d: DataPeserta | null): void {
+  dataPeserta = d;
+  for (const f of pendengarPeserta) f(d);
+}
+
+export function ambilPeserta(): DataPeserta | null {
+  return dataPeserta;
+}
+
+export function saatPesertaBerubah(f: PendengarPeserta): () => void {
+  pendengarPeserta.add(f);
+  return () => pendengarPeserta.delete(f);
+}
+
+// ---- Mapel pilihan yang dikecualikan di tab User Moodle (disimpan) ----
+
+const KUNCI_KECUALI = 'web-ujian.moodle.kecuali';
+
+export function muatPengecualian(awal: Record<string, string[]>): Record<string, string[]> {
+  try {
+    const data = JSON.parse(localStorage.getItem(KUNCI_KECUALI) ?? 'null') as unknown;
+    if (data && typeof data === 'object' && Object.values(data).every((v) => Array.isArray(v) && v.every((x) => typeof x === 'string'))) {
+      return { ...awal, ...(data as Record<string, string[]>) };
+    }
+  } catch {
+    // abaikan
+  }
+  return awal;
+}
+
+export function simpanPengecualian(k: Record<string, string[]>): void {
+  try {
+    localStorage.setItem(KUNCI_KECUALI, JSON.stringify(k));
+  } catch {
+    // abaikan
+  }
 }

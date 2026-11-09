@@ -29,6 +29,10 @@
 
 ### Session 2026-11-09
 
+- Q: Menu User Moodle? → A: Format USER MOODLE.csv. username/password/firstname
+  dari CBTAdmin, lastname = department = kelas, email = username@smada.id,
+  address = ruang. Course: X = semua shortname X; XI = semua kecuali 12 mapel
+  pilihan; XII = seperti XI.
 - Q: Urutan pilihan tingkat? → A: Kelas X, XI, lalu XII.
 - Q: Konversi semua kelas sekaligus? → A: Ya, satu file. `category` = hari ke-N
   (hari 1 = category 1); di setiap category urutan mapel kelas XII, X, lalu XI.
@@ -116,6 +120,33 @@ hasilnya, buka di Excel, dan pastikan file bisa langsung di-upload ke CBTAdmin.
 3. **Given** file yang di-upload tidak punya kolom wajib (`username`,
    `firstname`, `department`), **When** di-upload, **Then** aplikasi menolak
    dengan pesan yang menyebut kolom yang hilang.
+
+---
+
+### User Story 2b - User Moodle (Priority: P2)
+
+Operator membuka tab **User → Moodle** setelah meng-upload peserta di tab User →
+CBTAdmin dan mengonvert jadwal semua kelas. Aplikasi membuat CSV berformat
+`USER MOODLE.csv` dengan username, password, dan nama yang sama dengan file
+CBTAdmin, lalu mendaftarkan setiap siswa ke course kelasnya.
+
+**Acceptance Scenarios**:
+
+1. **Given** peserta sudah di-upload dan jadwal semua kelas sudah dikonvert,
+   **When** operator membuka tab User → Moodle, **Then** setiap baris berisi:
+   `username`, `password`, `firstname` = sama dengan CBTAdmin; `lastname` =
+   `department` = kelas; `email` = `username@smada.id`; `address` = ruang.
+2. **Given** siswa kelas X, **Then** course1..N = semua shortname kelas X dari
+   hasil konversi jadwal.
+3. **Given** siswa kelas XI atau XII, **Then** course = semua shortname kelasnya
+   kecuali mapel pilihan (awal: FISIKA, KIMIA LANJUT, PKWU, BING LANJUT, BINDO
+   LANJUT, SEJARAH INDO, EKONOMI, GEOGRAFI, MATEMATIKA LANJUT, INFORMATIKA,
+   BIOLOGI LANJUTAN, SOSIOLOGI LANJUTAN). Daftar ini bisa diedit per kelas.
+4. **Given** jadwal kelas siswa belum dikonvert, **Then** unduhan dikunci dan
+   aplikasi menunjukkan kelas mana yang belum.
+5. **Given** file diunduh, **Then** formatnya sama dengan `USER MOODLE.csv`:
+   pemisah `;`, CRLF, kolom `course1`–`course14` (lebih jika ada siswa dengan
+   lebih dari 14 course).
 
 ---
 
@@ -219,6 +250,9 @@ X, lalu cek hasil konversi memakai kode tersebut.
   template `user cbtadmin.xlsx` tanpa perubahan, header di baris 9, data mulai
   baris 10.
 - **FR-015**: Kolom `course1..course14` MUST diabaikan dalam output CBTAdmin.
+- **FR-015a**: Tingkat siswa untuk course diambil dari nama sheet (`KLS. XI`),
+  atau dari kelas jika tidak ada sheet, sehingga KELAS yang belum diperbarui tidak
+  membuat siswa XI mendapat course kelas X.
 
 **Umum**
 
