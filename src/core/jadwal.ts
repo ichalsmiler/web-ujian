@@ -139,3 +139,20 @@ export async function bacaJadwal(file: ArrayBuffer, namaSheet: string): Promise<
     peringatan,
   };
 }
+
+const NILAI_ROMAWI: Record<string, number> = { I: 1, V: 5, X: 10 };
+
+function romawiKeAngka(r: string): number {
+  let total = 0;
+  for (let i = 0; i < r.length; i++) {
+    const kini = NILAI_ROMAWI[r[i]] ?? 0;
+    const berikut = NILAI_ROMAWI[r[i + 1]] ?? 0;
+    total += kini < berikut ? -kini : kini;
+  }
+  return total;
+}
+
+/** Urutan tampilan tingkat dari kecil ke besar: X, XI, XII (urutan kolom di file tidak berubah). */
+export function urutTingkat(tingkat: readonly string[]): string[] {
+  return [...tingkat].sort((a, b) => romawiKeAngka(a) - romawiKeAngka(b));
+}

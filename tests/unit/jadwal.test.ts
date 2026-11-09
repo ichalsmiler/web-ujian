@@ -102,3 +102,11 @@ describe('bacaJadwal — galat', () => {
     expect(j.peringatan.some((p) => p.tingkat === 'peringatan' && /tanggal/i.test(p.pesan))).toBe(true);
   });
 });
+
+describe('urutTingkat', async () => {
+  const { urutTingkat } = await import('../../src/core/jadwal');
+  it('mengurutkan X, XI, XII walau kolom di file XII, X, XI', () => {
+    expect(urutTingkat(['XII', 'X', 'XI'])).toEqual(['X', 'XI', 'XII']);
+    expect(urutTingkat(['IX', 'VII', 'VIII'])).toEqual(['VII', 'VIII', 'IX']);
+  });
+});

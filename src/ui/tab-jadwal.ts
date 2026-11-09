@@ -1,7 +1,7 @@
 // Tab "Jadwal → Mapel": upload jadwal → pilih sheet & tingkat → Konvert → pratinjau → unduh.
 // Perilaku sesuai specs/001-konverter-cbt/contracts/ui.md
 
-import { bacaJadwal, daftarSheet } from '../core/jadwal';
+import { bacaJadwal, daftarSheet, urutTingkat } from '../core/jadwal';
 import { cocokkanJadwal, kunciPilihan, tambahAlias, tambahMapel } from '../core/kamus';
 import { susunBarisMapel, tulisMapelXlsx } from '../core/mapel';
 import { formatTanggal } from '../core/tanggal';
@@ -70,7 +70,7 @@ export function pasangTabJadwal(akar: HTMLElement): void {
     try {
       s.jadwal = await bacaJadwal(s.file!, nama);
       s.pilihan = muatPilihan(nama);
-      if (!s.jadwal.tingkat.includes(s.tingkat)) s.tingkat = s.jadwal.tingkat[0];
+      if (!s.jadwal.tingkat.includes(s.tingkat)) s.tingkat = urutTingkat(s.jadwal.tingkat)[0];
     } catch (e) {
       s.galat = pesanGalat(e);
     }
@@ -130,7 +130,8 @@ export function pasangTabJadwal(akar: HTMLElement): void {
   }
 
   function kartuJadwal(j: JadwalUjian): HTMLElement {
-    const kolom = [{ judul: 'Hari' }, { judul: 'Tanggal' }, { judul: 'Sesi' }, ...j.tingkat.map((t) => ({ judul: `Kelas ${t}` }))];
+    const tingkat = urutTingkat(j.tingkat);
+    const kolom = [{ judul: 'Hari' }, { judul: 'Tanggal' }, { judul: 'Sesi' }, ...tingkat.map((t) => ({ judul: `Kelas ${t}` }))];
     const baris: BarisTabel[] = [];
     for (const h of j.hari) {
       h.sesi.forEach((ses, i) => {
@@ -140,7 +141,7 @@ export function pasangTabJadwal(akar: HTMLElement): void {
             i === 0 ? h.namaHari || '—' : '',
             i === 0 ? formatTanggal(h.tanggal) : '',
             h.susulan ? 'Susulan' : ses.nomor,
-            ...j.tingkat.map((t) => (ses.mapelPerTingkat[t] ?? []).join(', ')),
+            ...tingkat.map((t) => (ses.mapelPerTingkat[t] ?? []).join(', ')),
           ],
         });
       });
@@ -157,7 +158,7 @@ export function pasangTabJadwal(akar: HTMLElement): void {
   }
 
   function kartuKonvert(j: JadwalUjian): HTMLElement {
-    const tombolTingkat = j.tingkat.map((t) => {
+    const tombolTingkat = urutTingkat(j.tingkat).map((t) => {
       const b = el('button', { class: 'tombol', type: 'button', 'aria-pressed': String(t === s.tingkat) }, `Kelas ${t}`);
       b.addEventListener('click', () => {
         s.tingkat = t;
