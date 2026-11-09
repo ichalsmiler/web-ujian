@@ -185,6 +185,8 @@ export function pasangTabUser(akar: HTMLElement): void {
 
   function kartuPratinjau(cbt: PesertaCBT[]): HTMLElement {
     const wadahTabel = el('div', { id: 'hasil-cari-user' });
+    // Nomor = urutan di file unduhan, jadi tetap sama saat pratinjau disaring dengan pencarian.
+    const nomor = new Map(cbt.map((p, i) => [p, i + 1]));
     const isiTabel = () => {
       const cocok = cariPeserta(cbt, s.cari);
       const tampil = cocok.slice(0, BATAS_PRATINJAU);
@@ -195,12 +197,12 @@ export function pasangTabUser(akar: HTMLElement): void {
         ...[
           cocok.length
             ? tabel(
-                ['Nama Peserta', 'Nama Rombel', 'Kelas / Jurusan', 'Ruang', 'Kel. Sesi', 'Username', 'Password'].map((judul) => ({
+                ['No.', 'Nama Peserta', 'Nama Rombel', 'Kelas / Jurusan', 'Ruang', 'Kel. Sesi', 'Username', 'Password'].map((judul) => ({
                   judul,
-                  angka: judul === 'Ruang' || judul === 'Kel. Sesi',
+                  angka: judul === 'No.' || judul === 'Ruang' || judul === 'Kel. Sesi',
                 })),
                 tampil.map((p) => ({
-                  sel: [p.namaPeserta, p.namaRombel, p.kelasJurusan, p.ruang, p.kelSesi, p.username, s.tampilkanPassword ? p.password : p.password ? '••••••' : ''],
+                  sel: [nomor.get(p) ?? null, p.namaPeserta, p.namaRombel, p.kelasJurusan, p.ruang, p.kelSesi, p.username, s.tampilkanPassword ? p.password : p.password ? '••••••' : ''],
                 })),
                 'Pratinjau data peserta untuk CBTAdmin',
               )

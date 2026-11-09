@@ -40,8 +40,20 @@ const MAPEL_AWAL: [kode: string, namaLengkap: string][] = [
   ['FISIKA', 'FISIKA'],
 ];
 
+/**
+ * Mapel pilihan yang tidak ada di MAPEL FIX.xlsx. Kodenya harus sama dengan kode kelas moving
+ * dan daftar mapel pilihan di tab User → Moodle (dikonfirmasi sekolah 2026-11-09).
+ */
+const MAPEL_TAMBAHAN: [kode: string, namaLengkap: string][] = [
+  ['BIOLOGI LANJUTAN', 'BIOLOGI LANJUTAN'],
+  ['SOSIOLOGI LANJUTAN', 'SOSIOLOGI LANJUTAN'],
+];
+
 /** Alias tambahan karena nama di jadwal berbeda dengan nama lengkap (research.md §6). */
 const ALIAS_TAMBAHAN: Record<string, string[]> = {
+  // Di jadwal tertulis "… Lanjutan", tetapi kode mapel pilihannya tetap GEOGRAFI / INFORMATIKA.
+  GEOGRAFI: ['geografi lanjutan'],
+  INFORMATIKA: ['informatika lanjutan'],
   'BINDO LANJUT': ['bahasa indonesia lanjutan'],
   'SEJARAH INDO': ['sejarah'],
   PAI: ['pendidikan agama islam'],
@@ -49,7 +61,7 @@ const ALIAS_TAMBAHAN: Record<string, string[]> = {
 };
 
 export function kamusAwal(): Kamus {
-  const mapel: Mapel[] = MAPEL_AWAL.map(([kode, namaLengkap]) => {
+  const mapel: Mapel[] = [...MAPEL_AWAL, ...MAPEL_TAMBAHAN].map(([kode, namaLengkap]) => {
     const alias = new Set([normalisasiNama(namaLengkap), normalisasiNama(kode), ...(ALIAS_TAMBAHAN[kode] ?? [])]);
     return { kode, namaLengkap, alias: [...alias] };
   });
@@ -65,6 +77,25 @@ function buangAliasGanda(mapel: Mapel[]): Mapel[] {
   const pemilik = new Map<string, string>();
   for (const m of mapel) for (const a of m.alias) if (!pemilik.has(a)) pemilik.set(a, m.kode);
   return mapel.map((m) => ({ ...m, alias: m.alias.filter((a) => pemilik.get(a) === m.kode) }));
+}
+
+/**
+ * Melengkapi kamus tersimpan (dari browser) dengan mapel dan alias kamus awal yang belum ada,
+ * mis. setelah aplikasi diperbarui. Isian operator tidak diubah: alias yang sudah dipakai
+ * mapel atau grup lain tidak ditambahkan. Input tidak diubah.
+ */
+export function lengkapiKamus(kamus: Kamus): Kamus {
+  const awal = kamusAwal();
+  const dipakai = new Set([...kamus.mapel.flatMap((m) => m.alias), ...kamus.grup.flatMap((g) => g.alias)]);
+  const ambilBaru = (alias: string[]) => alias.filter((a) => !dipakai.has(a) && (dipakai.add(a), true));
+  const mapel = kamus.mapel.map((m) => {
+    const dariAwal = cariMapel(awal, m.kode);
+    return { ...m, alias: [...m.alias, ...(dariAwal ? ambilBaru(dariAwal.alias) : [])] };
+  });
+  for (const m of awal.mapel) {
+    if (!cariMapel(kamus, m.kode)) mapel.push({ ...m, alias: ambilBaru(m.alias) });
+  }
+  return { ...kamus, grup: kamus.grup.map((g) => ({ ...g, alias: [...g.alias], kodeAnggota: [...g.kodeAnggota] })), mapel };
 }
 
 /** Kode untuk sebuah nama di jadwal (lebih dari satu untuk grup), atau null jika tidak dikenal. */

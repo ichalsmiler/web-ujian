@@ -182,12 +182,93 @@ export function kemiripan(a: string, b: string): number {
 
 export const AMBANG_MIRIP = 0.85;
 export const SELISIH_MIRIP = 0.1;
+/**
+ * Kandidat teratas di rombel yang sama dipasangkan otomatis jika kemiripannya minimal ini dan
+ * unggul jauh dari siswa lain di rombel itu (nama salah ketik di beberapa kata).
+ */
+export const AMBANG_UNGGUL = 0.65;
+export const SELISIH_UNGGUL = 0.2;
+
+/** Jumlah huruf yang harus diubah agar `a` menjadi `b` (jarak Levenshtein). */
+function jarakEdit(a: string, b: string): number {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+/** Salah ketik dalam satu kata: 1 huruf untuk kata 4–6 huruf, 2 huruf untuk kata ≥ 7 huruf. */
+function salahKetik(a: string, b: string): boolean {
+  const n = Math.min(a.length, b.length);
+  if (n < 4) return false;
+  return jarakEdit(a, b) <= (n >= 7 ? 2 : 1);
+}
+
+/** Penulisan "Muhammad" yang sering dipakai; semuanya dianggap kata yang sama. */
+const VARIAN_MUHAMMAD = /^(MUH|MUHD|MHD|MHMD|MOH|MOHD|MOCH|MUCH|MUHAMAD|MUHAMMAD|MUHAMMED|MUHAMED|MOHAMAD|MOHAMMAD|MOHAMMED|MOCHAMAD|MOCHAMMAD|MUCHAMAD|MUCHAMMAD)$/;
+
+/** Kata-kata nama: huruf A–Z saja; "A.K" → A, K; varian Muhammad disamakan. */
+export function kataNama(nama: string): string[] {
+  return nama
+    .toUpperCase()
+    .replace(/['’`]/g, '') // NUR'AINI → NURAINI
+    .split(/[^A-Z]+/)
+    .filter(Boolean)
+    .map((k) => (VARIAN_MUHAMMAD.test(k) ? 'MUHAMMAD' : k));
+}
+
+type JenisKata = 'penuh' | 'singkat';
+
+/** Apakah kata `a` (dari nama yang lebih pendek) bisa berarti kata `b`. */
+function cocokKata(a: string, b: string): JenisKata | null {
+  if (a === b) return 'penuh';
+  if (a.length === 1) return b[0] === a ? 'singkat' : null; // inisial: B → BINTANG
+  if (a.length >= 3 && b.startsWith(a)) return 'singkat'; // terpotong: SEKAR → SEKARWANGI
+  if (salahKetik(a, b)) return 'penuh'; // salah ketik: BAYU ~ BAYI, KIRANA ~ KHIRANNA
+  return null;
+}
+
+/** Setiap kata `pendek` cocok dengan kata `panjang` secara berurutan; minimal satu kata utuh ≥ 3 huruf. */
+function urutanCocok(pendek: string[], panjang: string[]): boolean {
+  let j = 0;
+  let utuh = 0;
+  for (const a of pendek) {
+    while (j < panjang.length && !cocokKata(a, panjang[j])) j++;
+    if (j === panjang.length) return false;
+    if (cocokKata(a, panjang[j]) === 'penuh' && a.length >= 3) utuh++;
+    j++;
+  }
+  return utuh >= 1;
+}
+
+/**
+ * Nama di file moving bisa berarti nama peserta: kata-katanya sama berurutan, tetapi boleh
+ * disingkat (inisial, terpotong), salah ketik sedikit, atau sebagian kata tidak ditulis.
+ * Contoh (nama karangan): "Siswa Contoh B.S" ~ "SISWA CONTOH BINTANG SEKARWANGI", "Muh Contoh" ~ "MUHAMMAD CONTOH".
+ */
+export function namaSesuai(a: string, b: string): boolean {
+  const x = kataNama(a);
+  const y = kataNama(b);
+  if (!x.length || !y.length) return false;
+  return x.length <= y.length ? urutanCocok(x, y) : urutanCocok(y, x);
+}
+
+/** Kandidat paling mirip di satu rombel cukup mirip dan unggul jauh dari siswa lain di rombel itu. */
+function unggulDiRombel(diRombel: { skor: number }[]): boolean {
+  const [a, b] = [...diRombel].sort((x, y) => y.skor - x.skor);
+  return !!a && a.skor >= AMBANG_UNGGUL && a.skor - (b?.skor ?? 0) >= SELISIH_UNGGUL;
+}
 
 export interface Kandidat {
   username: string;
   nama: string;
   kelas: string;
   skor: number;
+  /** Kata-kata namanya sesuai (lihat `namaSesuai`). */
+  sesuai: boolean;
 }
 
 export type StatusPasangan = 'persis' | 'mirip' | 'pilih';
@@ -205,52 +286,97 @@ export interface PasanganMoving {
 /**
  * Mencocokkan setiap murid di kelompok moving ke peserta tingkat yang sama.
  * - persis: nama sama (abaikan huruf besar/kecil, spasi, tanda baca)
- * - mirip: kemiripan ≥ 0.85, unggul ≥ 0.1 dari kandidat berikutnya, dan nomor rombel sama
+ * - mirip: kemiripan ≥ 0.85, unggul ≥ 0.1 dari kandidat berikutnya, dan nomor rombel sama;
+ *   atau hanya satu siswa di rombel itu yang namanya sesuai (nama disingkat/terpotong, lihat `namaSesuai`)
  * - pilih: selain itu — operator memilih
- * Kandidat dengan nomor rombel sama diberi sedikit tambahan skor saat diurutkan.
+ * Urutan kandidat: nama sesuai dulu, lalu rombel sama, lalu kemiripan.
  */
 export function cocokkanMoving(kelompok: KelompokMoving[], peserta: PesertaMasuk[], jumlahKandidat = 5): PasanganMoving[] {
-  const hasil: PasanganMoving[] = [];
   const indeks = new Map<string, PesertaMasuk[]>();
   for (const p of peserta) {
     const k = kunciNama(p.firstname);
     indeks.set(k, [...(indeks.get(k) ?? []), p]);
   }
-  for (const kel of kelompok) {
-    for (const s of kel.siswa) {
-      const nomor = nomorKelas(s.kelas);
-      // Nama sama persis; jika ada lebih dari satu siswa bernama sama, pakai nomor rombel untuk membedakan.
-      const sama = indeks.get(kunciNama(s.nama)) ?? [];
-      const persis = sama.length <= 1 ? sama : sama.filter((p) => nomorKelas(p.department) === nomor);
-      const kandidat = peserta
-        .map((p) => {
-          const skor = kemiripan(s.nama, p.firstname);
-          const bonus = nomor && nomorKelas(p.department) === nomor ? 0.03 : 0;
-          return { username: p.username, nama: p.firstname, kelas: p.department, skor, urut: skor + bonus };
-        })
-        .sort((a, b) => b.urut - a.urut)
-        .slice(0, jumlahKandidat)
-        .map(({ urut: _, ...k }) => k);
+  // Satu murid biasanya ada di beberapa file moving: hitung sekali per (nama, rombel).
+  const sudah = new Map<string, Pick<PasanganMoving, 'status' | 'username' | 'kandidat'>>();
 
-      if (persis.length === 1) {
-        hasil.push({ siswa: s, kelompok: kel, status: 'persis', username: persis[0].username, kandidat });
-        continue;
-      }
-      const [a, b] = kandidat;
-      const kelasSama = a && (!nomor || nomorKelas(a.kelas) === nomor);
-      if (a && a.skor >= AMBANG_MIRIP && a.skor - (b?.skor ?? 0) >= SELISIH_MIRIP && kelasSama) {
-        hasil.push({ siswa: s, kelompok: kel, status: 'mirip', username: a.username, kandidat });
-      } else {
-        hasil.push({ siswa: s, kelompok: kel, status: 'pilih', username: '', kandidat });
-      }
+  const pasangkan = (nama: string, nomor: string): Pick<PasanganMoving, 'status' | 'username' | 'kandidat'> => {
+    // Nama sama persis; jika ada lebih dari satu siswa bernama sama, pakai nomor rombel untuk membedakan.
+    const sama = indeks.get(kunciNama(nama)) ?? [];
+    const persis = sama.length <= 1 ? sama : sama.filter((p) => nomorKelas(p.department) === nomor);
+    const rombelSama = (kelas: string) => !nomor || nomorKelas(kelas) === nomor;
+    const semua = peserta
+      .map((p) => {
+        const skor = kemiripan(nama, p.firstname);
+        const sesuai = namaSesuai(nama, p.firstname);
+        const urut = skor + (nomor && nomorKelas(p.department) === nomor ? 0.15 : 0) + (sesuai ? 0.5 : 0);
+        return { username: p.username, nama: p.firstname, kelas: p.department, skor, sesuai, urut };
+      })
+      .sort((a, b) => b.urut - a.urut);
+    const kandidat = semua.slice(0, jumlahKandidat).map(({ urut: _, ...k }) => k);
+    if (persis.length === 1) return { status: 'persis', username: persis[0].username, kandidat };
+
+    // Paling mirip (salah ketik kecil)
+    const [a, b] = [...kandidat].sort((x, y) => y.skor - x.skor);
+    if (a && a.skor >= AMBANG_MIRIP && a.skor - (b?.skor ?? 0) >= SELISIH_MIRIP && rombelSama(a.kelas)) {
+      return { status: 'mirip', username: a.username, kandidat };
     }
-  }
-  return hasil;
+    // Nama disingkat/terpotong: tepat satu siswa di rombel itu yang namanya sesuai
+    const sesuaiDiRombel = semua.filter((k) => k.sesuai && rombelSama(k.kelas));
+    if (sesuaiDiRombel.length === 1) return { status: 'mirip', username: sesuaiDiRombel[0].username, kandidat };
+    // Beberapa kata salah ketik: kandidat teratas di rombel itu jauh lebih mirip daripada yang lain
+    const diRombel = semua.filter((k) => rombelSama(k.kelas)).sort((x, y) => y.skor - x.skor);
+    if (nomor && sesuaiDiRombel.length === 0 && unggulDiRombel(diRombel)) {
+      return { status: 'mirip', username: diRombel[0].username, kandidat };
+    }
+    return { status: 'pilih', username: '', kandidat };
+  };
+
+  return kelompok.flatMap((kel) =>
+    kel.siswa.map((s) => {
+      const nomor = nomorKelas(s.kelas);
+      const kunci = `${kunciNama(s.nama)}|${nomor}`;
+      if (!sudah.has(kunci)) sudah.set(kunci, pasangkan(s.nama, nomor));
+      return { siswa: s, kelompok: kel, ...sudah.get(kunci)! };
+    }),
+  );
 }
 
-/** Kunci untuk menyimpan pilihan operator atas satu baris file moving. */
+/**
+ * Kunci untuk menyimpan pilihan operator atas satu baris file moving. Memuat tingkat, karena
+ * file moving XI dan XII bisa punya judul kelompok yang sama (mis. "FISIKA 1").
+ */
 export function kunciPasangan(p: Pick<PasanganMoving, 'siswa' | 'kelompok'>): string {
+  return `${p.kelompok.tingkat}|${p.kelompok.judul}|${kunciNama(p.siswa.nama)}|${nomorKelas(p.siswa.kelas)}`;
+}
+
+/** Kunci versi lama (tanpa tingkat), yang mungkin masih tersimpan di browser. */
+function kunciPasanganLama(p: Pick<PasanganMoving, 'siswa' | 'kelompok'>): string {
   return `${p.kelompok.judul}|${kunciNama(p.siswa.nama)}|${nomorKelas(p.siswa.kelas)}`;
+}
+
+/**
+ * Pilihan operator untuk satu baris: username, '' (diabaikan), atau undefined (belum dipilih).
+ * Kunci baru didahulukan; kunci lama tetap dibaca supaya pilihan tersimpan tidak hilang.
+ */
+export function pilihanPasangan(p: Pick<PasanganMoving, 'siswa' | 'kelompok'>, pilihan: Readonly<Record<string, string>>): string | undefined {
+  const k = kunciPasangan(p);
+  if (k in pilihan) return pilihan[k];
+  const lama = kunciPasanganLama(p);
+  return lama in pilihan ? pilihan[lama] : undefined;
+}
+
+/** Kunci untuk kode mapel yang diganti operator, per tingkat dan singkatan mapel. */
+export function kunciKodeMoving(k: Pick<KelompokMoving, 'tingkat' | 'singkatan'>): string {
+  return `${k.tingkat}|${k.singkatan}`;
+}
+
+/**
+ * Kode mapel kelompok setelah penggantian operator. Kunci lama (hanya singkatan, berlaku
+ * untuk semua tingkat) tetap dibaca jika belum ada penggantian untuk tingkat ini.
+ */
+export function kodeMovingAktif(k: Pick<KelompokMoving, 'tingkat' | 'singkatan' | 'kode'>, diganti: Readonly<Record<string, string>>): string {
+  return diganti[kunciKodeMoving(k)] ?? diganti[k.singkatan] ?? k.kode;
 }
 
 export interface TambahanManual {
@@ -276,8 +402,7 @@ export function movingPerSiswa(
     hasil.get(u)!.add(s);
   };
   for (const p of pasangan) {
-    const k = kunciPasangan(p);
-    const username = k in pilihan ? pilihan[k] : p.username;
+    const username = pilihanPasangan(p, pilihan) ?? p.username;
     if (p.kelompok.kode) tambah(username, `${prefix}-${p.kelompok.tingkat}-${p.kelompok.kode}`);
   }
   for (const m of manual) tambah(m.username, m.shortname);
@@ -297,8 +422,7 @@ export interface PasanganGanda {
 export function pasanganGanda(pasangan: PasanganMoving[], pilihan: Record<string, string>): PasanganGanda[] {
   const grup = new Map<string, PasanganMoving[]>();
   for (const p of pasangan) {
-    const k = kunciPasangan(p);
-    const u = k in pilihan ? pilihan[k] : p.username;
+    const u = pilihanPasangan(p, pilihan) ?? p.username;
     if (!u || !p.kelompok.kode) continue;
     const g = `${u}|${p.kelompok.tingkat}|${p.kelompok.kode}`;
     grup.set(g, [...(grup.get(g) ?? []), p]);
@@ -306,4 +430,69 @@ export function pasanganGanda(pasangan: PasanganMoving[], pilihan: Record<string
   return [...grup]
     .filter(([, b]) => b.length > 1)
     .map(([g, baris]) => ({ username: g.split('|')[0], kode: g.split('|')[2], baris }));
+}
+
+// ---------- rekap per siswa (file cek untuk operator) ----------
+
+/** Jumlah mapel moving yang seharusnya dimiliki setiap siswa (aturan sekolah 2026-11-09). */
+export const JUMLAH_MOVING = 4;
+
+export interface BarisRekapMoving {
+  username: string;
+  nama: string;
+  kelas: string;
+  /** Kode mapel tanpa awalan, mis. "BING LANJUT". */
+  mapel: string[];
+}
+
+/** Satu baris per siswa (urutan sama dengan file peserta), dengan mapel moving-nya. */
+export function rekapMoving(peserta: PesertaMasuk[], moving: ReadonlyMap<string, readonly string[]>): BarisRekapMoving[] {
+  return peserta.map((p) => ({
+    username: p.username,
+    nama: p.firstname,
+    kelas: p.department,
+    mapel: (moving.get(p.username) ?? []).map((s) => s.replace(/^[^-]+-[^-]+-/, '')).sort((a, b) => a.localeCompare(b)),
+  }));
+}
+
+/** Keterangan untuk siswa yang jumlah mapel moving-nya tidak sesuai; '' jika sesuai. */
+export function keteranganRekap(jumlah: number, wajib = JUMLAH_MOVING): string {
+  if (jumlah === wajib) return '';
+  if (jumlah === 0) return 'Belum punya mapel moving';
+  return jumlah < wajib ? `Kurang ${wajib - jumlah} mapel` : `Lebih ${jumlah - wajib} mapel`;
+}
+
+const MERAH_ISI = 'FFFFC7CE';
+const MERAH_TEKS = 'FF9C0006';
+
+/**
+ * File Excel untuk mengecek kelas moving: semua siswa dan mapel moving-nya.
+ * Baris siswa yang jumlah mapel moving-nya bukan `wajib` diwarnai merah.
+ */
+export async function tulisRekapMovingXlsx(baris: BarisRekapMoving[], wajib = JUMLAH_MOVING): Promise<ArrayBuffer> {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Rekap moving', { views: [{ state: 'frozen', ySplit: 1 }] });
+  ws.columns = [
+    { header: 'No. Ujian', key: 'username', width: 14 },
+    { header: 'Nama Siswa', key: 'nama', width: 38 },
+    { header: 'Kelas', key: 'kelas', width: 9 },
+    { header: 'Jumlah Mapel Moving', key: 'jumlah', width: 12 },
+    { header: 'Mapel Moving', key: 'mapel', width: 70 },
+    { header: 'Keterangan', key: 'ket', width: 26 },
+  ];
+  const header = ws.getRow(1);
+  header.font = { bold: true };
+  header.alignment = { vertical: 'middle', wrapText: true };
+  for (const b of baris) {
+    const row = ws.addRow({ username: b.username, nama: b.nama, kelas: b.kelas, jumlah: b.mapel.length, mapel: b.mapel.join(', '), ket: keteranganRekap(b.mapel.length, wajib) });
+    row.getCell('username').numFmt = '@';
+    if (b.mapel.length !== wajib) {
+      row.eachCell({ includeEmpty: true }, (c) => {
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: MERAH_ISI } };
+        c.font = { color: { argb: MERAH_TEKS } };
+      });
+    }
+  }
+  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: 6 } };
+  return (await wb.xlsx.writeBuffer()) as ArrayBuffer;
 }

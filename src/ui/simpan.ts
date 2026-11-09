@@ -1,7 +1,7 @@
 // Penyimpanan kamus & pengaturan di localStorage, serta unduhan file.
 // Data siswa dan file jadwal TIDAK pernah disimpan di sini.
 
-import { kamusAwal } from '../core/kamus';
+import { kamusAwal, lengkapiKamus } from '../core/kamus';
 import type { Kamus, PesertaMasuk, PilihanMapel } from '../core/tipe';
 
 const KUNCI_KAMUS = 'web-ujian.kamus';
@@ -25,7 +25,7 @@ export function muatKamus(): Kamus {
     const teks = localStorage.getItem(KUNCI_KAMUS);
     if (teks) {
       const data: unknown = JSON.parse(teks);
-      if (kamusValid(data)) return data;
+      if (kamusValid(data)) return lengkapiKamus(data);
     }
   } catch {
     // Data rusak atau localStorage tidak tersedia: pakai kamus awal.

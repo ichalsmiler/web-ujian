@@ -28,9 +28,12 @@ describe('cocokkanJadwal — XII', () => {
     expect(cari('Bhs. Inggris')[0]).toMatchObject({ status: 'duplikat', kode: ['BING'], hariKe: 5, lokasi: 'D14' });
   });
 
-  it('nama yang tidak ada di kamus → tidak-dikenal', () => {
-    const tidak = hasil.filter((h) => h.status === 'tidak-dikenal').map((h) => h.teksAsli);
-    expect(tidak).toEqual(['Geografi Lanjutan', 'Sosiologi Lanjutan', 'Biologi Lanjutan', 'Informatika Lanjutan']);
+  it('mapel pilihan "… Lanjutan" dikenali kamus awal, jadi tidak ada yang tidak-dikenal', () => {
+    expect(hasil.filter((h) => h.status === 'tidak-dikenal').map((h) => h.teksAsli)).toEqual([]);
+    expect(cari('Biologi Lanjutan')[0]).toMatchObject({ status: 'cocok', kode: ['BIOLOGI LANJUTAN'] });
+    expect(cari('Sosiologi Lanjutan')[0]).toMatchObject({ status: 'cocok', kode: ['SOSIOLOGI LANJUTAN'] });
+    expect(cari('Geografi Lanjutan')[0]).toMatchObject({ status: 'cocok', kode: ['GEOGRAFI'] });
+    expect(cari('Informatika Lanjutan')[0]).toMatchObject({ status: 'cocok', kode: ['INFORMATIKA'] });
   });
 
   it('pilihan operator menimpa hasil pencocokan', () => {

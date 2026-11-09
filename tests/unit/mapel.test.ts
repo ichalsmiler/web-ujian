@@ -1,22 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import ExcelJS from 'exceljs';
 import { bacaJadwal } from '../../src/core/jadwal';
-import { cocokkanJadwal, kamusAwal, tambahAlias } from '../../src/core/kamus';
+import { cocokkanJadwal, kamusAwal } from '../../src/core/kamus';
 import { susunBarisMapel, tulisMapelXlsx } from '../../src/core/mapel';
 import type { BarisMapel } from '../../src/core/tipe';
 import { bacaFixture, SHEET_2026 } from './bantu';
 
 const jadwal = await bacaJadwal(bacaFixture('jadwal-2026.xlsx'), SHEET_2026);
 
-let kamus = kamusAwal();
-for (const [teks, kode] of [
-  ['Geografi Lanjutan', 'GEOGRAFI'],
-  ['Sosiologi Lanjutan', 'SOSIOLOGI'],
-  ['Biologi Lanjutan', 'BIOLOGI'],
-  ['Informatika Lanjutan', 'INFORMATIKA'],
-] as const) {
-  kamus = tambahAlias(kamus, teks, kode);
-}
+const kamus = kamusAwal();
 const baris = susunBarisMapel(cocokkanJadwal(jadwal, 'XII', kamus), 'XII', kamus);
 
 describe('susunBarisMapel — XII', () => {

@@ -44,7 +44,7 @@ const buku = await bukuContohMoving([
       ['Orang Tidak Dikenal', 'XI 4'], // tidak ada → pilih
     ],
   },
-  { judul: 'BIOLOGI 2', siswa: [['C. Lestari', 'XI 3']] }, // singkatan → pilih
+  { judul: 'BIOLOGI 2', siswa: [['C. Lestari', 'XI 3']] }, // singkatan, satu-satunya di rombel 3 → mirip
 ]);
 const kelompok = await bacaFileMoving(buku, 'DAFTAR HADIR KELAS MOVING XI BIO.xlsx');
 
@@ -115,7 +115,7 @@ describe('cocokkanMoving', () => {
       ['Andi Murid Bernama Panjanq', 'mirip', '92-26-0003'],
       ['Budi Santoso', 'persis', '92-26-0005'],
       ['Orang Tidak Dikenal', 'pilih', ''],
-      ['C. Lestari', 'pilih', ''],
+      ['C. Lestari', 'mirip', '92-26-0006'],
     ]);
   });
 
@@ -133,7 +133,8 @@ describe('movingPerSiswa', () => {
     const m = movingPerSiswa(hasil, {}, []);
     expect(m.get('92-26-0001')).toEqual(['USBK-XI-BIOLOGI LANJUTAN']);
     expect(m.get('92-26-0003')).toEqual(['USBK-XI-BIOLOGI LANJUTAN']); // hasil "mirip" ikut
-    expect(m.has('92-26-0006')).toBe(false); // belum dipilih
+    expect(m.get('92-26-0006')).toEqual(['USBK-XI-BIOLOGI LANJUTAN']); // "C. Lestari", nama disingkat
+    expect(m.has('92-26-0004')).toBe(false); // "Orang Tidak Dikenal" belum dipilih
   });
 
   it('pilihan operator menimpa; pilihan kosong = diabaikan', () => {
@@ -167,6 +168,10 @@ describe('pasanganGanda', async () => {
     expect(g).toHaveLength(1);
     expect(g[0]).toMatchObject({ username: '92-26-0001', kode: 'FISIKA' });
     expect(g[0].baris.map((x) => x.kelompok.judul)).toEqual(['FISIKA 1', 'FISIKA 2']);
+  });
+
+  it('siswa yang tercantum dua kali tetap didaftarkan sekali ke mapel itu', () => {
+    expect(movingPerSiswa(hasil, {}, []).get('92-26-0001')).toEqual(['USBK-XI-FISIKA']);
   });
 
   it('hilang setelah salah satu baris diabaikan', () => {
@@ -225,5 +230,113 @@ describe('tingkat kelas moving: XI hanya dengan XI, XII hanya dengan XII', async
     const [k] = await bacaFileMoving(b, 'DAFTAR HADIR KELAS MOVING XI FIS.xlsx');
     expect(k.tingkat).toBe('XI');
     expect(k.peringatan).toMatch(/kelas XI.*kolom KELAS berisi kelas XII/);
+  });
+});
+
+describe('kunci pilihan operator per tingkat (moving XI dan XII)', async () => {
+  const { pilihanPasangan, kodeMovingAktif, kunciKodeMoving } = await import('../../src/core/moving');
+  const baris = (tingkat: string) => ({
+    siswa: { nama: 'Siswa Contoh Satu', kelas: `${tingkat} 1`, lokasi: '' },
+    kelompok: { judul: 'FISIKA 1', kode: 'FISIKA', singkatan: 'FIS', tingkat, namaFile: '', sheet: '1', siswa: [] },
+  });
+
+  it('judul kelompok, nama, dan nomor rombel sama di XI dan XII tidak bertabrakan', () => {
+    expect(kunciPasangan(baris('XI'))).not.toBe(kunciPasangan(baris('XII')));
+    const pilihan = { [kunciPasangan(baris('XII'))]: '93-26-0001' };
+    expect(pilihanPasangan(baris('XII'), pilihan)).toBe('93-26-0001');
+    expect(pilihanPasangan(baris('XI'), pilihan)).toBeUndefined();
+  });
+
+  it('pilihan tersimpan dengan kunci lama (tanpa tingkat) tetap terbaca; kunci baru didahulukan', () => {
+    const lama = { 'FISIKA 1|SISWACONTOHSATU|1': '92-26-0001' };
+    expect(pilihanPasangan(baris('XI'), lama)).toBe('92-26-0001');
+    expect(pilihanPasangan(baris('XI'), { ...lama, [kunciPasangan(baris('XI'))]: '' })).toBe('');
+  });
+
+  it('kode mapel yang diganti hanya berlaku untuk tingkatnya; kunci lama berlaku untuk semua', () => {
+    const xi = baris('XI').kelompok;
+    const xii = baris('XII').kelompok;
+    const diganti = { [kunciKodeMoving(xii)]: 'KIMIA LANJUT' };
+    expect(kodeMovingAktif(xii, diganti)).toBe('KIMIA LANJUT');
+    expect(kodeMovingAktif(xi, diganti)).toBe('FISIKA');
+    expect(kodeMovingAktif(xi, { FIS: 'EKONOMI' })).toBe('EKONOMI');
+    expect(kodeMovingAktif(xi, { FIS: 'EKONOMI', [kunciKodeMoving(xi)]: 'GEOGRAFI' })).toBe('GEOGRAFI');
+  });
+});
+
+describe('nama disingkat, terpotong, atau salah ketik', async () => {
+  const { namaSesuai } = await import('../../src/core/moving');
+
+  it('namaSesuai: inisial, kata terpotong, varian Muhammad, salah ketik kecil', () => {
+    expect(namaSesuai('Siswi Contoh B.S', 'SISWI CONTOH BINTANG SEKARWANGI')).toBe(true);
+    expect(namaSesuai('Muh Contoh D', 'MUHAMMAD CONTOH DELIMA')).toBe(true);
+    expect(namaSesuai('M. Contoh Tiga', 'MOH. CONTOH TIGA')).toBe(true);
+    expect(namaSesuai('A. Contoh Lima', 'ANDI CONTOH LIMA')).toBe(true);
+    expect(namaSesuai('Contoh Bayu', 'CONTOH BAYI')).toBe(true);
+    expect(namaSesuai("Contoh Nuraini", "CONTOH NUR'AINI")).toBe(true);
+    expect(namaSesuai('Contoh Kirana', 'CONTOH KIRANA SENJA')).toBe(true);
+  });
+
+  it('namaSesuai: tidak menyamakan nama yang berbeda', () => {
+    expect(namaSesuai('Budi Santoso', 'Citra Lestari')).toBe(false);
+    expect(namaSesuai('A. B.', 'ANDI BUDI')).toBe(false); // hanya inisial
+    expect(namaSesuai('Contoh Satu', 'SATU CONTOH')).toBe(false); // urutan kata beda
+  });
+
+  const SISWA = [
+    p('92-26-0101', 'PUTRI CONTOH BINTANG SEKARWANGI', 'XI-9'),
+    p('92-26-0102', 'PUTRI CONTOH MELATI', 'XI-3'),
+    p('92-26-0103', 'PUTRI MAHARANI', 'XI-9'),
+    p('92-26-0104', 'MUHAMMAD CONTOH DELIMA', 'XI-9'),
+    p('92-26-0105', 'MUHAMMAD CONTOH DAMAR', 'XI-9'),
+  ];
+  const b = await bukuContohMoving([
+    {
+      judul: 'BINDO 1',
+      siswa: [
+        ['Putri Contoh B.S', 'XI 9'], // satu-satunya yang sesuai di XI-9 → mirip
+        ['Muh Contoh D', 'XI 9'], // dua siswa sesuai di XI-9 → pilih
+      ],
+    },
+  ]);
+  const hasil = cocokkanMoving(await bacaFileMoving(b, 'DAFTAR HADIR KELAS MOVING XI BINDO.xlsx'), SISWA);
+
+  it('dipasangkan otomatis jika hanya satu siswa di rombel itu yang namanya sesuai', () => {
+    expect(hasil[0]).toMatchObject({ status: 'mirip', username: '92-26-0101' });
+    expect(hasil[0].kandidat[0]).toMatchObject({ username: '92-26-0101', sesuai: true });
+  });
+
+  it('tetap dipilih operator jika lebih dari satu siswa di rombel itu sesuai', () => {
+    expect(hasil[1]).toMatchObject({ status: 'pilih', username: '' });
+    expect(hasil[1].kandidat.slice(0, 2).map((k) => k.username).sort()).toEqual(['92-26-0104', '92-26-0105']);
+  });
+});
+
+describe('rekap kelas moving (.xlsx)', async () => {
+  const ExcelJS = (await import('exceljs')).default;
+  const { rekapMoving, tulisRekapMovingXlsx, keteranganRekap } = await import('../../src/core/moving');
+  const SISWA = [p('92-26-0201', 'Siswa Empat', 'XI-1'), p('92-26-0202', 'Siswa Dua', 'XI-1'), p('92-26-0203', 'Siswa Lima', 'XI-2'), p('92-26-0204', 'Siswa Nol', 'XI-2')];
+  const mapel = (n: number) => ['FISIKA', 'EKONOMI', 'GEOGRAFI', 'INFORMATIKA', 'KIMIA LANJUT'].slice(0, n).map((k) => `USBK-XI-${k}`);
+  const moving = new Map([['92-26-0201', mapel(4)], ['92-26-0202', mapel(2)], ['92-26-0203', mapel(5)]]);
+  const baris = rekapMoving(SISWA, moving);
+
+  it('satu baris per siswa, mapel tanpa awalan USBK-XI-', () => {
+    expect(baris.map((b) => [b.username, b.mapel.length])).toEqual([['92-26-0201', 4], ['92-26-0202', 2], ['92-26-0203', 5], ['92-26-0204', 0]]);
+    expect(baris[1].mapel).toEqual(['EKONOMI', 'FISIKA']);
+  });
+
+  it('keterangan: kurang, lebih, atau belum punya', () => {
+    expect([4, 2, 5, 0].map((n) => keteranganRekap(n))).toEqual(['', 'Kurang 2 mapel', 'Lebih 1 mapel', 'Belum punya mapel moving']);
+  });
+
+  it('baris yang mapel moving-nya bukan 4 diwarnai merah, yang 4 tidak', async () => {
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await tulisRekapMovingXlsx(baris));
+    const ws = wb.worksheets[0];
+    expect(ws.getRow(1).values).toEqual([, 'No. Ujian', 'Nama Siswa', 'Kelas', 'Jumlah Mapel Moving', 'Mapel Moving', 'Keterangan']);
+    const merah = (r: number) => (ws.getCell(r, 1).fill as { fgColor?: { argb?: string } } | undefined)?.fgColor?.argb === 'FFFFC7CE';
+    expect([2, 3, 4, 5].map(merah)).toEqual([false, true, true, true]);
+    expect(ws.getCell(3, 6).value).toBe('Kurang 2 mapel');
+    expect(ws.getCell(5, 5).value).toBe('');
   });
 });

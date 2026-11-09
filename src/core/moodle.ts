@@ -12,10 +12,10 @@ export const DOMAIN_EMAIL = 'smada.id';
 const MIN_KOLOM_COURSE = 14;
 
 /**
- * Mapel pilihan (moving) kelas XI dari sekolah (2026-11-09); tidak didaftarkan untuk semua siswa,
+ * Mapel pilihan (moving) kelas XI dan XII dari sekolah (2026-11-09); tidak didaftarkan untuk semua siswa,
  * hanya untuk siswa yang ada di daftar kelas moving. PKWU dan SEJARAH INDO bukan mapel pilihan.
  */
-const PILIHAN_XI = [
+const MAPEL_PILIHAN = [
   'FISIKA',
   'KIMIA LANJUT',
   'BING LANJUT',
@@ -32,8 +32,8 @@ const PILIHAN_XI = [
 export function pengecualianAwal(): Record<string, string[]> {
   return {
     X: [],
-    XI: PILIHAN_XI.map((k) => `USBK-XI-${k}`),
-    XII: PILIHAN_XI.map((k) => `USBK-XII-${k}`),
+    XI: MAPEL_PILIHAN.map((k) => `USBK-XI-${k}`),
+    XII: MAPEL_PILIHAN.map((k) => `USBK-XII-${k}`),
   };
 }
 
