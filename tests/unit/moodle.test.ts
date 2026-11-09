@@ -14,11 +14,11 @@ const MAPEL = new Map<string, string[]>([
 ]);
 
 describe('pengecualianAwal', () => {
-  it('X tidak ada; XI berisi 12 mapel pilihan dari sekolah; XII sama dengan awalan XII', () => {
+  it('X tidak ada; XI berisi 10 mapel pilihan (tanpa PKWU & SEJARAH INDO); XII sama dengan awalan XII', () => {
     const k = pengecualianAwal();
     expect(k.X).toEqual([]);
     expect(k.XI).toEqual([
-      'USBK-XI-FISIKA', 'USBK-XI-KIMIA LANJUT', 'USBK-XI-PKWU', 'USBK-XI-BING LANJUT', 'USBK-XI-BINDO LANJUT', 'USBK-XI-SEJARAH INDO',
+      'USBK-XI-FISIKA', 'USBK-XI-KIMIA LANJUT', 'USBK-XI-BING LANJUT', 'USBK-XI-BINDO LANJUT',
       'USBK-XI-EKONOMI', 'USBK-XI-GEOGRAFI', 'USBK-XI-MATEMATIKA LANJUT', 'USBK-XI-INFORMATIKA', 'USBK-XI-BIOLOGI LANJUTAN', 'USBK-XI-SOSIOLOGI LANJUTAN',
     ]);
     expect(k.XII).toEqual(k.XI.map((s) => s.replace('USBK-XI-', 'USBK-XII-')));
@@ -61,7 +61,7 @@ describe('keMoodle', () => {
 
   it('kelas XI mendapat semua shortname XI kecuali mapel pilihan', () => {
     const xi = hasil.baris.find((b) => b.tingkat === 'XI')!;
-    expect(xi.course).toEqual(['USBK-XI-MATEMATIKA', 'USBK-XI-BINDO', 'USBK-XI-PAI', 'USBK-XI-PAK']);
+    expect(xi.course).toEqual(['USBK-XI-MATEMATIKA', 'USBK-XI-BINDO', 'USBK-XI-PAI', 'USBK-XI-PAK', 'USBK-XI-PKWU']);
   });
 
   it('tingkat diambil dari sheet walau KELAS masih kelas lama', () => {
@@ -71,7 +71,7 @@ describe('keMoodle', () => {
   });
 
   it('kelas XII mengikuti aturan XI', () => {
-    expect(hasil.baris.find((b) => b.tingkat === 'XII')!.course).toEqual(['USBK-XII-MATEMATIKA', 'USBK-XII-PJOK']);
+    expect(hasil.baris.find((b) => b.tingkat === 'XII')!.course).toEqual(['USBK-XII-MATEMATIKA', 'USBK-XII-PJOK', 'USBK-XII-SEJARAH INDO']);
   });
 
   it('memperingatkan pengecualian yang tidak ada di daftar mapel', () => {
@@ -109,5 +109,26 @@ describe('tulisMoodleCsv', () => {
     const h = tulisMoodleCsv([{ ...baris[0], course: banyak }]).split('\r\n');
     expect(h[0].split(';')).toHaveLength(7 + 17);
     expect(h[0].endsWith('course17')).toBe(true);
+  });
+});
+
+describe('keMoodle — kelas moving', () => {
+  it('mapel moving siswa ditambahkan setelah mapel wajib, tanpa ganda', () => {
+    const moving = new Map([['92-26-0001', ['USBK-XI-FISIKA', 'USBK-XI-BIOLOGI LANJUTAN', 'USBK-XI-MATEMATIKA']]]);
+    const h = keMoodle(peserta, cbt, MAPEL, pengecualianAwal(), moving);
+    expect(h.baris.find((b) => b.username === '92-26-0001')!.course).toEqual([
+      'USBK-XI-MATEMATIKA', 'USBK-XI-BINDO', 'USBK-XI-PAI', 'USBK-XI-PAK', 'USBK-XI-PKWU', 'USBK-XI-FISIKA', 'USBK-XI-BIOLOGI LANJUTAN',
+    ]);
+  });
+
+  it('memperingatkan siswa XI tanpa mapel moving dan kode moving yang tidak ada di jadwal', () => {
+    const moving = new Map([['92-26-0001', ['USBK-XI-FISIKA', 'USBK-XI-GEOGRAFI']]]);
+    const p = keMoodle(peserta, cbt, MAPEL, pengecualianAwal(), moving).peringatan.map((x) => x.pesan);
+    expect(p.some((x) => x.startsWith('1 siswa kelas XI belum punya mapel moving'))).toBe(true);
+    expect(p.some((x) => x.includes('USBK-XI-GEOGRAFI') && x.includes('Samakan kodenya'))).toBe(true);
+  });
+
+  it('tanpa data moving, perilaku lama tidak berubah', () => {
+    expect(keMoodle(peserta, cbt, MAPEL, pengecualianAwal()).peringatan.some((x) => /moving/.test(x.pesan))).toBe(false);
   });
 });

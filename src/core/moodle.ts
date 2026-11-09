@@ -11,14 +11,15 @@ import { tingkatDariRombel, tingkatDariSheet } from './user';
 export const DOMAIN_EMAIL = 'smada.id';
 const MIN_KOLOM_COURSE = 14;
 
-/** Mapel pilihan kelas XI dari sekolah (2026-11-09); tidak didaftarkan untuk semua siswa. */
+/**
+ * Mapel pilihan (moving) kelas XI dari sekolah (2026-11-09); tidak didaftarkan untuk semua siswa,
+ * hanya untuk siswa yang ada di daftar kelas moving. PKWU dan SEJARAH INDO bukan mapel pilihan.
+ */
 const PILIHAN_XI = [
   'FISIKA',
   'KIMIA LANJUT',
-  'PKWU',
   'BING LANJUT',
   'BINDO LANJUT',
-  'SEJARAH INDO',
   'EKONOMI',
   'GEOGRAFI',
   'MATEMATIKA LANJUT',
@@ -70,12 +71,14 @@ export interface HasilMoodle {
  * @param cbt      hasil keCbt: sumber username, password, nama, kelas, ruang
  * @param mapel    shortname per tingkat dari tab Jadwal, urut seperti file mapel
  * @param kecuali  shortname yang tidak didaftarkan, per tingkat
+ * @param moving   shortname mapel moving per username (dari tab Kelas Moving), ditambahkan ke course
  */
 export function keMoodle(
   peserta: PesertaMasuk[],
   cbt: PesertaCBT[],
   mapel: ReadonlyMap<string, readonly string[]>,
   kecuali: Record<string, readonly string[]>,
+  moving: ReadonlyMap<string, readonly string[]> = new Map(),
   domain = DOMAIN_EMAIL,
 ): HasilMoodle {
   const tanpaMapel = new Set<string>();
@@ -92,7 +95,7 @@ export function keMoodle(
       email: `${c.username}@${domain}`,
       department: c.namaRombel,
       address: c.ruang === null ? '' : String(c.ruang),
-      course: (daftar ?? []).filter((s) => !buang.has(s)),
+      course: [...new Set([...(daftar ?? []).filter((s) => !buang.has(s)), ...(moving.get(c.username) ?? [])])],
       tingkat,
     };
   });
@@ -115,6 +118,27 @@ export function keMoodle(
         tingkat: 'peringatan',
         pesan: `Mapel pilihan kelas ${t} ini tidak ada di hasil konversi jadwal, jadi tidak berpengaruh: ${tidakAda.join(', ')}. Periksa penulisannya`,
       });
+    }
+  }
+  // Kelas moving: siswa tingkat yang punya mapel pilihan tetapi belum ada di daftar moving.
+  if (moving.size > 0) {
+    const tingkatMoving = new Set([...moving.values()].flat().map((s) => s.split('-')[1]));
+    for (const t of tingkatMoving) {
+      const tanpa = baris.filter((b) => b.tingkat === t && !moving.has(b.username)).length;
+      if (tanpa) {
+        peringatan.push({
+          tingkat: 'peringatan',
+          pesan: `${tanpa} siswa kelas ${t} belum punya mapel moving, jadi hanya didaftarkan ke mapel wajib. Periksa tab Kelas Moving`,
+        });
+      }
+      const ada = mapel.get(t);
+      const asing = [...new Set([...moving.values()].flat().filter((s) => s.split('-')[1] === t && ada && !ada.includes(s)))];
+      if (asing.length) {
+        peringatan.push({
+          tingkat: 'peringatan',
+          pesan: `Mapel moving kelas ${t} ini tidak ada di hasil konversi jadwal: ${asing.join(', ')}. Samakan kodenya di kamus mapel`,
+        });
+      }
     }
   }
   return { baris, peringatan, tingkatTanpaMapel: [...tanpaMapel] };

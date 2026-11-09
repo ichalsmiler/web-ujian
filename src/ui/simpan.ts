@@ -147,7 +147,8 @@ export function saatPesertaBerubah(f: PendengarPeserta): () => void {
 
 // ---- Mapel pilihan yang dikecualikan di tab User Moodle (disimpan) ----
 
-const KUNCI_KECUALI = 'web-ujian.moodle.kecuali';
+// v2: PKWU & SEJARAH INDO bukan mapel pilihan (2026-11-09); daftar versi lama diabaikan.
+const KUNCI_KECUALI = 'web-ujian.moodle.kecuali.v2';
 
 export function muatPengecualian(awal: Record<string, string[]>): Record<string, string[]> {
   try {
@@ -167,4 +168,24 @@ export function simpanPengecualian(k: Record<string, string[]>): void {
   } catch {
     // abaikan
   }
+}
+
+// ---- Mapel moving per username (hanya di memori), dari tab Kelas Moving untuk tab User Moodle ----
+
+type PendengarMoving = (m: ReadonlyMap<string, readonly string[]>) => void;
+let dataMoving: ReadonlyMap<string, readonly string[]> = new Map();
+const pendengarMoving = new Set<PendengarMoving>();
+
+export function catatMoving(m: ReadonlyMap<string, readonly string[]>): void {
+  dataMoving = m;
+  for (const f of pendengarMoving) f(m);
+}
+
+export function ambilMoving(): ReadonlyMap<string, readonly string[]> {
+  return dataMoving;
+}
+
+export function saatMovingBerubah(f: PendengarMoving): () => void {
+  pendengarMoving.add(f);
+  return () => pendengarMoving.delete(f);
 }

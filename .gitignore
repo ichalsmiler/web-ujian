@@ -11,3 +11,11 @@ dist/
 test-results/
 playwright-report/
 .vite/
+
+# Semua file data sekolah di subfolder juga (mis. "moving xi/"), kecuali fixture palsu & aset template
+*.xlsx
+*.xls
+*.csv
+*.pdf
+!tests/fixtures/*
+!src/assets/*

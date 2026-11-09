@@ -29,6 +29,10 @@
 
 ### Session 2026-11-09
 
+- Q: Kelas moving? → A: Menu untuk memasukkan nama beserta kelas moving-nya, dari
+  file DAFTAR HADIR KELAS MOVING XI <MAPEL>.xlsx. Pemetaan mapel dikonfirmasi.
+  PKWU dan SEJARAH INDO **bukan** mapel pilihan (semua siswa didaftarkan). Nama
+  yang sangat mirip dicocokkan otomatis dan ditandai.
 - Q: Menu User Moodle? → A: Format USER MOODLE.csv. username/password/firstname
   dari CBTAdmin, lastname = department = kelas, email = username@smada.id,
   address = ruang. Course: X = semua shortname X; XI = semua kecuali 12 mapel
@@ -150,6 +154,35 @@ CBTAdmin, lalu mendaftarkan setiap siswa ke course kelasnya.
 
 ---
 
+### User Story 2c - Kelas moving (Priority: P2)
+
+Operator meng-upload file daftar hadir kelas moving (satu file per mapel pilihan,
+mis. `DAFTAR HADIR KELAS MOVING XI BIO.xlsx`; satu sheet per kelompok; kolom NAMA
+MURID dan KELAS). Aplikasi mencocokkan setiap murid ke peserta tingkat yang sama
+**lewat nama** (file moving tidak punya nomor ujian), lalu menambahkan mapel moving
+itu ke course siswa di file User Moodle.
+
+**Acceptance Scenarios**:
+
+1. **Given** file moving di-upload (bisa banyak sekaligus), **Then** setiap sheet
+   berisi murid menjadi satu kelompok, dan mapelnya dipetakan: BING→BING LANJUT,
+   BINDO→BINDO LANJUT, BIOLOGI→BIOLOGI LANJUTAN, EKONOMI→EKONOMI, FISIKA→FISIKA,
+   GEOGRAFI→GEOGRAFI, INFORMATIKA→INFORMATIKA, KIMIA→KIMIA LANJUT,
+   MATEMATIKA→MATEMATIKA LANJUT, SOSIOLOGI→SOSIOLOGI LANJUTAN (bisa diganti).
+2. **Given** nama sama persis (abaikan huruf besar/kecil, spasi, tanda baca),
+   **Then** langsung dipasangkan. Nama sangat mirip (kemiripan ≥ 85%, unggul
+   ≥ 10 poin dari kandidat berikutnya, nomor rombel sama) dipasangkan otomatis
+   tetapi ditandai kuning. Selain itu ditandai merah dan operator memilih dari
+   kandidat teratas, mencari siswa lain, atau mengabaikan barisnya.
+3. **Given** siswa tidak ada di file moving, **Then** operator bisa
+   menambahkannya secara manual (siswa + mapel moving).
+4. **Given** satu siswa terpasang lebih dari sekali ke mapel yang sama, **Then**
+   aplikasi menampilkannya untuk dicek.
+5. **Given** pencocokan selesai, **Then** course siswa di User Moodle = mapel
+   wajib + mapel moving miliknya; siswa XI tanpa mapel moving diberi peringatan.
+
+---
+
 ### User Story 3 - Kamus mata pelajaran (Priority: P3)
 
 Operator mengelola daftar mapel: nama yang tampil di jadwal (mis. "Bahasa
@@ -250,6 +283,8 @@ X, lalu cek hasil konversi memakai kode tersebut.
   template `user cbtadmin.xlsx` tanpa perubahan, header di baris 9, data mulai
   baris 10.
 - **FR-015**: Kolom `course1..course14` MUST diabaikan dalam output CBTAdmin.
+- **FR-015b**: Pilihan pencocokan nama kelas moving hanya disimpan di memori
+  selama halaman terbuka (data siswa tidak disimpan di browser).
 - **FR-015a**: Tingkat siswa untuk course diambil dari nama sheet (`KLS. XI`),
   atau dari kelas jika tidak ada sheet, sehingga KELAS yang belum diperbarui tidak
   membuat siswa XI mendapat course kelas X.

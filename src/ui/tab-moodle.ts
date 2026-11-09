@@ -6,10 +6,12 @@ import { urutTingkat } from '../core/jadwal';
 import { keCbt } from '../core/user';
 import {
   ambilHasilMapel,
+  ambilMoving,
   ambilPeserta,
   mapelLengkap,
   muatPengecualian,
   saatHasilMapelBerubah,
+  saatMovingBerubah,
   saatPesertaBerubah,
   simpanPengecualian,
   unduhCsv,
@@ -47,6 +49,7 @@ export function pasangTabMoodle(akar: HTMLElement): void {
     gambar();
   });
   saatHasilMapelBerubah(() => gambar());
+  saatMovingBerubah(() => gambar());
 
   function tombolKe(tab: string, label: string): HTMLButtonElement {
     const b = el('button', { class: 'tombol', type: 'button' }, label);
@@ -121,7 +124,7 @@ export function pasangTabMoodle(akar: HTMLElement): void {
       el(
         'p',
         { class: 'bantu' },
-        'Siswa didaftarkan ke semua mapel kelasnya, kecuali shortname di bawah ini. Satu shortname per baris; perubahan disimpan otomatis.',
+        'Siswa didaftarkan ke semua mapel kelasnya, kecuali shortname di bawah ini. Mapel pilihan hanya didaftarkan untuk siswa yang ada di tab Kelas Moving. Satu shortname per baris; perubahan disimpan otomatis.',
       ),
       el('div', { class: 'grid-kecuali' }, ...kolom),
       el('div', { class: 'baris-kontrol' }, kembali),
@@ -133,7 +136,7 @@ export function pasangTabMoodle(akar: HTMLElement): void {
     if (!data) return null;
     const sheet = [...new Set(data.peserta.map((p) => p.sheet).filter((x): x is string => !!x))];
     const peserta = sheetDipilih ? data.peserta.filter((p) => p.sheet === sheetDipilih) : data.peserta;
-    const { baris, peringatan, tingkatTanpaMapel } = keMoodle(peserta, keCbt(peserta), ambilHasilMapel(), kecuali);
+    const { baris, peringatan, tingkatTanpaMapel } = keMoodle(peserta, keCbt(peserta), ambilHasilMapel(), kecuali, ambilMoving());
     const belumLengkap = [...new Set(baris.map((b) => b.tingkat))].filter((t) => ambilHasilMapel().has(t) && !mapelLengkap(t));
     const pesan = [
       ...peringatan,
