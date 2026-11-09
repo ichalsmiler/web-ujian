@@ -122,7 +122,8 @@ export function kunciPilihan(lokasi: string, teksAsli: string): string {
 
 /**
  * Mencocokkan semua mapel untuk satu tingkat ke kamus.
- * `hariKe` = urutan hari non-susulan yang punya ≥1 mapel untuk tingkat ini.
+ * `hariKe` = urutan hari ujian di jadwal (hari non-susulan yang berisi mapel untuk
+ * tingkat mana pun), sama untuk semua kelas: hari ke-1 = category 1.
  * Kode yang sudah muncul sebelumnya di tingkat yang sama ditandai `duplikat`.
  */
 export function cocokkanJadwal(
@@ -136,15 +137,16 @@ export function cocokkanJadwal(
   const kolom = jadwal.kolomTingkat[tingkat] ?? '';
   let hariKe = 0;
 
+  const bukanSusulan = (t: string) => !/^susulan$/i.test(t);
+
   for (const hari of jadwal.hari) {
     if (hari.susulan) continue;
-    const isi = hari.sesi.flatMap((s) =>
-      (s.mapelPerTingkat[tingkat] ?? [])
-        .filter((t) => !/^susulan$/i.test(t))
-        .map((t) => ({ teks: t, lokasi: `${kolom}${s.baris}` })),
-    );
-    if (isi.length === 0) continue;
+    const adaUjian = hari.sesi.some((s) => Object.values(s.mapelPerTingkat).some((m) => m.some(bukanSusulan)));
+    if (!adaUjian) continue;
     hariKe++;
+    const isi = hari.sesi.flatMap((s) =>
+      (s.mapelPerTingkat[tingkat] ?? []).filter(bukanSusulan).map((t) => ({ teks: t, lokasi: `${kolom}${s.baris}` })),
+    );
 
     for (const { teks, lokasi } of isi) {
       const dipilih = pilihan[kunciPilihan(lokasi, teks)];

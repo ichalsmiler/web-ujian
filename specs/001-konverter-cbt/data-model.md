@@ -72,13 +72,16 @@ membiarkannya (baris kedua dibuang).
 
 | Kolom | Isi |
 | --- | --- |
-| `category` | number — urutan hari non-susulan yang punya ≥1 mapel untuk tingkat ini, mulai 1 |
+| `category` | number — urutan hari non-susulan yang berisi mapel (kelas mana pun), mulai 1; sama untuk semua kelas |
 | `format` | `singleactivity` |
 | `shortname` | `USBK-${tingkat}-${kode}` |
 | `fullname` | `${namaLengkap} ${tingkat}` |
 
 Urutan baris: berdasarkan `category`, lalu urutan kemunculan di jadwal (sesi I
 sebelum sesi II, kiri ke kanan di dalam sel). Setiap `shortname` unik per file.
+
+File gabungan (**Konvert semua kelas**): urut `category`, lalu kelas XII → X → XI
+(tingkat lain menyusul sesuai urutan kolom), lalu urutan kemunculan di jadwal.
 
 ## Konversi user
 

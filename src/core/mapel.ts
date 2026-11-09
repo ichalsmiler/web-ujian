@@ -40,3 +40,24 @@ export async function tulisMapelXlsx(baris: BarisMapel[]): Promise<ArrayBuffer> 
   for (const b of baris) ws.addRow(b);
   return (await wb.xlsx.writeBuffer()) as ArrayBuffer;
 }
+
+/** Urutan kelas di dalam setiap category pada file gabungan (permintaan sekolah): XII, X, lalu XI. */
+export const URUTAN_GABUNG = ['XII', 'X', 'XI'];
+
+/** Tingkat yang dikonvert untuk "semua kelas": XII, X, XI dulu, tingkat lain menyusul sesuai urutan di file. */
+export function urutGabung(tingkat: readonly string[]): string[] {
+  return [...URUTAN_GABUNG.filter((t) => tingkat.includes(t)), ...tingkat.filter((t) => !URUTAN_GABUNG.includes(t))];
+}
+
+/**
+ * Menggabungkan hasil semua kelas ke satu daftar mapel. Urut berdasarkan category (hari ke-N),
+ * lalu kelas sesuai `urutGabung`, lalu urutan kemunculan di jadwal.
+ */
+export function susunBarisMapelSemua(perTingkat: { tingkat: string; hasil: HasilCocok[] }[], kamus: Kamus): BarisMapel[] {
+  const urutan = urutGabung(perTingkat.map((p) => p.tingkat));
+  const semua = urutan.flatMap((t, rank) => {
+    const p = perTingkat.find((x) => x.tingkat === t)!;
+    return susunBarisMapel(p.hasil, t, kamus).map((b, i) => ({ b, rank, i }));
+  });
+  return semua.sort((x, y) => x.b.category - y.b.category || x.rank - y.rank || x.i - y.i).map((x) => x.b);
+}

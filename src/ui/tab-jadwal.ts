@@ -3,7 +3,7 @@
 
 import { bacaJadwal, daftarSheet, urutTingkat } from '../core/jadwal';
 import { cocokkanJadwal, kunciPilihan, tambahAlias, tambahMapel } from '../core/kamus';
-import { susunBarisMapel, tulisMapelXlsx } from '../core/mapel';
+import { susunBarisMapel, susunBarisMapelSemua, tulisMapelXlsx, urutGabung } from '../core/mapel';
 import { formatTanggal } from '../core/tanggal';
 import { GalatFormat, type HasilCocok, type JadwalUjian, type Kamus, type Peringatan, type PilihanMapel } from '../core/tipe';
 import { catatHasilMapel, muatKamus, muatPilihan, saatKamusBerubah, simpanKamus, simpanPilihan, unduhFile } from './simpan';
@@ -17,6 +17,8 @@ interface Status {
   jadwal: JadwalUjian | null;
   galat: Peringatan[];
   tingkat: string;
+  /** 'satu' = kelas yang dipilih saja; 'semua' = semua kelas dalam satu file. */
+  mode: 'satu' | 'semua';
   sudahKonvert: boolean;
   kamus: Kamus;
   /** Per tingkat. */
@@ -35,6 +37,7 @@ export function pasangTabJadwal(akar: HTMLElement): void {
     jadwal: null,
     galat: [],
     tingkat: '',
+    mode: 'satu',
     sudahKonvert: false,
     kamus: muatKamus(),
     pilihan: {},
@@ -77,12 +80,12 @@ export function pasangTabJadwal(akar: HTMLElement): void {
     gambar();
   }
 
-  function aturPilihan(lokasi: string, teks: string, kode: string[] | null): void {
-    const p = { ...(s.pilihan[s.tingkat] ?? {}) };
+  function aturPilihan(tingkat: string, lokasi: string, teks: string, kode: string[] | null): void {
+    const p = { ...(s.pilihan[tingkat] ?? {}) };
     const k = kunciPilihan(lokasi, teks);
     if (kode === null) delete p[k];
     else p[k] = kode;
-    s.pilihan = { ...s.pilihan, [s.tingkat]: p };
+    s.pilihan = { ...s.pilihan, [tingkat]: p };
     simpanPilihan(s.sheetDipilih, s.pilihan);
     gambar();
   }
@@ -159,25 +162,38 @@ export function pasangTabJadwal(akar: HTMLElement): void {
 
   function kartuKonvert(j: JadwalUjian): HTMLElement {
     const tombolTingkat = urutTingkat(j.tingkat).map((t) => {
-      const b = el('button', { class: 'tombol', type: 'button', 'aria-pressed': String(t === s.tingkat) }, `Kelas ${t}`);
+      const b = el('button', { class: 'tombol', type: 'button', 'aria-pressed': String(s.mode === 'satu' && t === s.tingkat) }, `Kelas ${t}`);
       b.addEventListener('click', () => {
         s.tingkat = t;
+        s.mode = 'satu';
         s.sudahKonvert = false;
         gambar();
       });
       return b;
     });
     const konvert = el('button', { class: 'tombol utama', type: 'button', id: 'tombol-konvert', disabled: !s.tingkat }, 'Konvert');
-    konvert.addEventListener('click', () => {
+    const jalankan = (mode: Status['mode']) => {
+      s.mode = mode;
       s.sudahKonvert = true;
       gambar();
       document.getElementById('kartu-hasil')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+    };
+    konvert.addEventListener('click', () => jalankan('satu'));
+    const urutan = urutGabung(j.tingkat);
+    const semua = el(
+      'button',
+      { class: 'tombol utama', type: 'button', id: 'tombol-konvert-semua', 'aria-pressed': String(s.mode === 'semua' && s.sudahKonvert) },
+      'Konvert semua kelas',
+    );
+    semua.addEventListener('click', () => jalankan('semua'));
     return el(
       'div',
       { class: 'kartu' },
       el('h2', {}, el('span', { class: 'langkah' }, '3'), 'Pilih tingkat lalu konvert'),
       el('div', { class: 'baris-kontrol', role: 'group', 'aria-label': 'Tingkat kelas' }, ...tombolTingkat, konvert),
+      el('p', { class: 'bantu' }, 'atau gabungkan semua kelas dalam satu file:'),
+      el('div', { class: 'baris-kontrol' }, semua),
+      el('p', { class: 'bantu' }, `Satu file berisi kelas ${urutan.join(', ')}. category = hari ujian ke-N; di setiap category, urutan mapel kelas ${urutan.join(' → ')}.`),
     );
   }
 
@@ -222,30 +238,35 @@ export function pasangTabJadwal(akar: HTMLElement): void {
     return el('div', { class: 'baris-kontrol' }, el('label', { class: 'sr-only', for: id }, `Mapel untuk ${h.teksAsli}`), sel, baru, simpan, galat);
   }
 
-  function tindakanDuplikat(h: HasilCocok, i: number): HTMLElement {
+  function tindakanDuplikat(h: HasilCocok, tingkat: string, i: number): HTMLElement {
     const id = `ganda-${i}`;
     const sel = pilihanMapel(id, [el('option', { value: PILIH_ABAIKAN }, 'Abaikan (sudah ada)')]);
     const terapkan = el('button', { class: 'tombol', type: 'button' }, 'Terapkan');
     terapkan.addEventListener('click', () => {
       if (!sel.value) return;
-      aturPilihan(h.lokasi, h.teksAsli, sel.value === PILIH_ABAIKAN ? [] : [sel.value]);
+      aturPilihan(tingkat, h.lokasi, h.teksAsli, sel.value === PILIH_ABAIKAN ? [] : [sel.value]);
     });
     return el('div', { class: 'baris-kontrol' }, el('label', { class: 'sr-only', for: id }, `Ganti ${h.teksAsli} dengan`), sel, terapkan);
   }
 
-  function tindakanDipilih(h: HasilCocok): HTMLElement {
+  function tindakanDipilih(h: HasilCocok, tingkat: string): HTMLElement {
     const batal = el('button', { class: 'tombol', type: 'button' }, 'Batalkan pilihan');
-    batal.addEventListener('click', () => aturPilihan(h.lokasi, h.teksAsli, null));
+    batal.addEventListener('click', () => aturPilihan(tingkat, h.lokasi, h.teksAsli, null));
     return el('div', { class: 'baris-kontrol' }, el('span', {}, h.kode.length ? `Dipilih: ${h.kode.join(', ')}` : 'Diabaikan'), batal);
   }
 
   function kartuHasil(j: JadwalUjian): HTMLElement {
-    const hasil = cocokkanJadwal(j, s.tingkat, s.kamus, s.pilihan[s.tingkat] ?? {});
-    const baris = susunBarisMapel(hasil, s.tingkat, s.kamus);
-    catatHasilMapel(s.tingkat, baris.map((b) => b.shortname));
+    const semuaKelas = s.mode === 'semua';
+    const daftar = semuaKelas ? urutGabung(j.tingkat) : [s.tingkat];
+    const per = daftar.map((t) => ({ tingkat: t, hasil: cocokkanJadwal(j, t, s.kamus, s.pilihan[t] ?? {}) }));
+    for (const p of per) catatHasilMapel(p.tingkat, susunBarisMapel(p.hasil, p.tingkat, s.kamus).map((b) => b.shortname));
+    const baris = semuaKelas ? susunBarisMapelSemua(per, s.kamus) : susunBarisMapel(per[0].hasil, s.tingkat, s.kamus);
+    const hasil = per.flatMap((p) => p.hasil.map((h) => ({ ...h, tingkat: p.tingkat })));
     const tidakDikenal = hasil.filter((h) => h.status === 'tidak-dikenal');
     const duplikat = hasil.filter((h) => h.status === 'duplikat');
     const masalah = hasil.filter((h) => h.status !== 'cocok' || h.dipilih);
+    const label = semuaKelas ? `semua kelas (${daftar.join(', ')})` : `kelas ${s.tingkat}`;
+    const namaFile = semuaKelas ? 'MAPEL SEMUA KELAS.xlsx' : `MAPEL ${s.tingkat}.xlsx`;
 
     const pesan: Peringatan[] = [];
     if (tidakDikenal.length) {
@@ -260,26 +281,27 @@ export function pasangTabJadwal(akar: HTMLElement): void {
 
     const tabelMasalah = masalah.length
       ? tabel(
-          [{ judul: 'Hari ke', angka: true }, { judul: 'Sel' }, { judul: 'Nama di jadwal' }, { judul: 'Masalah' }, { judul: 'Tindakan' }],
+          [{ judul: 'Hari ke', angka: true }, { judul: 'Kelas' }, { judul: 'Sel' }, { judul: 'Nama di jadwal' }, { judul: 'Masalah' }, { judul: 'Tindakan' }],
           masalah.map((h, i) => ({
             tanda: h.status === 'tidak-dikenal' ? 'merah' : h.status === 'duplikat' ? 'kuning' : undefined,
             sel: [
               h.hariKe,
+              h.tingkat,
               h.lokasi,
               h.teksAsli,
               h.status === 'tidak-dikenal' ? 'Belum ada di kamus' : h.status === 'duplikat' ? `Sama dengan ${h.kode.join(', ')} di hari lain` : 'Sudah dipilih',
-              h.status === 'tidak-dikenal' ? tindakanTidakDikenal(h, i) : h.status === 'duplikat' ? tindakanDuplikat(h, i) : tindakanDipilih(h),
+              h.status === 'tidak-dikenal' ? tindakanTidakDikenal(h, i) : h.status === 'duplikat' ? tindakanDuplikat(h, h.tingkat, i) : tindakanDipilih(h, h.tingkat),
             ],
           })),
           'Nama mapel yang perlu diperiksa',
         )
       : null;
 
-    const unduh = el('button', { class: 'tombol utama', type: 'button', id: 'tombol-unduh', disabled: tidakDikenal.length > 0 || baris.length === 0 }, `Unduh MAPEL ${s.tingkat}.xlsx`);
+    const unduh = el('button', { class: 'tombol utama', type: 'button', id: 'tombol-unduh', disabled: tidakDikenal.length > 0 || baris.length === 0 }, `Unduh ${namaFile}`);
     unduh.addEventListener('click', async () => {
       unduh.disabled = true;
       try {
-        unduhFile(`MAPEL ${s.tingkat}.xlsx`, await tulisMapelXlsx(baris));
+        unduhFile(namaFile, await tulisMapelXlsx(baris));
       } finally {
         unduh.disabled = false;
       }
@@ -288,14 +310,14 @@ export function pasangTabJadwal(akar: HTMLElement): void {
     return el(
       'div',
       { class: 'kartu', id: 'kartu-hasil' },
-      el('h2', {}, el('span', { class: 'langkah' }, '4'), `Pratinjau mapel kelas ${s.tingkat}`),
+      el('h2', {}, el('span', { class: 'langkah' }, '4'), `Pratinjau mapel ${label}`),
       daftarPesan(pesan),
       tabelMasalah,
       masalah.length ? el('p', {}) : null,
       tabel(
         [{ judul: 'category', angka: true }, { judul: 'format' }, { judul: 'shortname' }, { judul: 'fullname' }],
         baris.map((b) => ({ sel: [b.category, b.format, b.shortname, b.fullname] })),
-        `Hasil konversi mapel kelas ${s.tingkat}`,
+        `Hasil konversi mapel ${label}`,
       ),
       el('p', { class: 'jumlah' }, `${baris.length} mapel dalam ${new Set(baris.map((b) => b.category)).size} hari.`),
       el('div', { class: 'baris-kontrol' }, unduh),

@@ -26,6 +26,12 @@
 - Q: Prefix `shortname`? → A: Selalu `USBK-<tingkat sesuai kolom kelas>-<mapel>`.
 - Q: Isi kolom `Kelas / Jurusan` di CBTAdmin? → A: Belum diputuskan (menunggu pengguna).
 
+### Session 2026-11-09
+
+- Q: Urutan pilihan tingkat? → A: Kelas X, XI, lalu XII.
+- Q: Konversi semua kelas sekaligus? → A: Ya, satu file. `category` = hari ke-N
+  (hari 1 = category 1); di setiap category urutan mapel kelas XII, X, lalu XI.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Konversi jadwal menjadi daftar mapel (Priority: P1)
@@ -172,6 +178,7 @@ X, lalu cek hasil konversi memakai kode tersebut.
   `MAPEL FIX.xlsx`.
 - **FR-006**: `category` MUST berisi nomor urut hari ujian (1, 2, 3, …) sesuai
   urutan tanggal, sehingga semua mapel di hari yang sama berbagi `category`.
+  Nomor ini sama untuk semua kelas: hari ujian ke-1 = category 1.
 - **FR-007**: `format` MUST selalu `singleactivity`.
 - **FR-008**: `shortname` MUST berbentuk `USBK-<TINGKAT>-<KODE>`, dengan
   TINGKAT mengikuti kolom kelas di jadwal (mis. `USBK-X-MATEMATIKA`,
@@ -179,6 +186,10 @@ X, lalu cek hasil konversi memakai kode tersebut.
 - **FR-009**: `fullname` MUST berbentuk `<NAMA LENGKAP> <TINGKAT>`.
 - **FR-010**: Operator MUST bisa memilih tingkat yang dikonvert; setiap tingkat
   menghasilkan file terpisah bernama `MAPEL <TINGKAT>.xlsx`.
+- **FR-010a**: Operator MUST bisa menekan **Konvert semua kelas** untuk membuat
+  satu file `MAPEL SEMUA KELAS.xlsx` berisi semua tingkat. Baris diurutkan per
+  `category`; di dalam setiap `category`, urutannya kelas XII, lalu X, lalu XI
+  (tingkat lain menyusul), dan di dalam satu kelas sesuai urutan di jadwal.
 - **FR-011**: Mapel "Pendidikan Agama" MUST dipecah menjadi satu baris per agama
   yang dikonfigurasi (awal: PAI, PAK).
 
@@ -241,7 +252,8 @@ X, lalu cek hasil konversi memakai kode tersebut.
 - `Ruang` diambil dari kolom `address` file user (pada contoh berisi `1`).
 - `Kel. Sesi` dibiarkan kosong karena tidak ada di file sumber.
 - Nama sheet output tidak memengaruhi proses upload.
-- Hari ke-N dihitung hanya dari hari yang punya mapel untuk tingkat tersebut.
+- Hari ke-N dihitung dari hari non-susulan yang berisi mapel untuk kelas mana pun,
+  sehingga nomornya sama untuk semua kelas.
 - Aplikasi dipakai di jaringan lokal sekolah dan harus tetap jalan tanpa internet.
 - Di luar cakupan versi ini: membuat soal, mengunggah langsung ke CBTAdmin/Moodle,
   membaca PDF hasil scan, cetak kartu ujian.
