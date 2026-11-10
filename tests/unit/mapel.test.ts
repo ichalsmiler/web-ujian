@@ -20,7 +20,7 @@ describe('susunBarisMapel — XII', () => {
       fullname,
     });
     expect(baris.slice(0, 7)).toEqual([
-      r(1, 'USBK-XII-MATEMATIKA', 'Matematika XII'),
+      r(1, 'USBK-XII-MATEMATIKA', 'MATEMATIKA XII'),
       r(1, 'USBK-XII-BINDO', 'BHS INDONESIA XII'),
       r(2, 'USBK-XII-PENDIDIKAN PANCASILA', 'PENDIDIKAN PANCASILA XII'),
       r(2, 'USBK-XII-SENI BUDAYA', 'SENI BUDAYA XII'),
@@ -42,13 +42,14 @@ describe('susunBarisMapel — XII', () => {
     expect(c.at(-1)).toBe(8);
   });
 
-  it('nama lengkap tidak "diperbaiki"', () => {
+  it('fullname huruf kapital semua; ejaan nama lengkap tidak "diperbaiki"', () => {
     expect(baris.find((b) => b.shortname === 'USBK-XII-BINDO LANJUT')!.fullname).toBe('BHS INDONESIA LANJT XII');
+    expect(baris.find((b) => b.shortname === 'USBK-XII-KIMIA LANJUT')!.fullname).toBe('KIMIA LANJUT XII'); // huruf kapital semua
   });
 
   it('tingkat lain memakai tingkatnya sendiri', () => {
     const x = susunBarisMapel(cocokkanJadwal(jadwal, 'XI', kamus), 'XI', kamus);
-    expect(x[0]).toEqual({ category: 1, format: 'singleactivity', shortname: 'USBK-XI-MATEMATIKA', fullname: 'Matematika XI' });
+    expect(x[0]).toEqual({ category: 1, format: 'singleactivity', shortname: 'USBK-XI-MATEMATIKA', fullname: 'MATEMATIKA XI' });
   });
 });
 

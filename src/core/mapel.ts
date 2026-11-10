@@ -22,7 +22,7 @@ export function susunBarisMapel(hasil: HasilCocok[], tingkat: string, kamus: Kam
       const shortname = `${PREFIX}-${tingkat}-${m.kode}`;
       if (ada.has(shortname)) continue;
       ada.add(shortname);
-      baris.push({ category: h.hariKe, format: 'singleactivity', shortname, fullname: `${m.namaLengkap} ${tingkat}` });
+      baris.push({ category: h.hariKe, format: 'singleactivity', shortname, fullname: `${m.namaLengkap} ${tingkat}`.toUpperCase() });
     }
   }
   // sort stabil: urutan kemunculan dipertahankan di dalam category yang sama

@@ -69,7 +69,7 @@ isinya dengan `MAPEL FIX.xlsx`.
    muncul satu baris per mapel dengan `category` = urutan hari ujian (Senin 23
    Nov = 1, Selasa 24 Nov = 2, …, Kamis 3 Des = 8), `format` = `singleactivity`,
    `shortname` = `USBK-<TINGKAT>-<KODE MAPEL>` (mis. `USBK-XII-MATEMATIKA`), dan
-   `fullname` = `<NAMA MAPEL> <TINGKAT>` (mis. `Matematika XII`).
+   `fullname` = `<NAMA MAPEL> <TINGKAT>` (mis. `MATEMATIKA XII`; huruf kapital semua, keputusan pengguna 2026-11-10).
 2. **Given** file jadwal punya lebih dari satu sheet, **When** di-upload,
    **Then** operator bisa memilih sheet mana yang dibaca.
 3. **Given** satu sel berisi dua mapel (mis. "Fisika, Kimia Lanjutan"),
@@ -268,7 +268,7 @@ X, lalu cek hasil konversi memakai kode tersebut.
 - **FR-008**: `shortname` MUST berbentuk `USBK-<TINGKAT>-<KODE>`, dengan
   TINGKAT mengikuti kolom kelas di jadwal (mis. `USBK-X-MATEMATIKA`,
   `USBK-XI-MATEMATIKA`, `USBK-XII-MATEMATIKA`).
-- **FR-009**: `fullname` MUST berbentuk `<NAMA LENGKAP> <TINGKAT>`.
+- **FR-009**: `fullname` MUST berbentuk `<NAMA LENGKAP> <TINGKAT>` dalam huruf kapital semua.
 - **FR-010**: Operator MUST bisa memilih tingkat yang dikonvert; setiap tingkat
   menghasilkan file terpisah bernama `MAPEL <TINGKAT>.xlsx`.
 - **FR-010a**: Operator MUST bisa menekan **Konvert semua kelas** untuk membuat

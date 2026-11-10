@@ -75,7 +75,7 @@ membiarkannya (baris kedua dibuang).
 | `category` | number — urutan hari non-susulan yang berisi mapel (kelas mana pun), mulai 1; sama untuk semua kelas |
 | `format` | `singleactivity` |
 | `shortname` | `USBK-${tingkat}-${kode}` |
-| `fullname` | `${namaLengkap} ${tingkat}` |
+| `fullname` | `${namaLengkap} ${tingkat}`, huruf kapital semua (keputusan pengguna 2026-11-10) |
 
 Urutan baris: berdasarkan `category`, lalu urutan kemunculan di jadwal (sesi I
 sebelum sesi II, kiri ke kanan di dalam sel). Setiap `shortname` unik per file.
