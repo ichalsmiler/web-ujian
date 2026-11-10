@@ -76,7 +76,8 @@ export type PilihanMapel = Record<string, string[]>;
 
 export interface BarisMapel {
   category: number;
-  format: 'singleactivity';
+  /** Biasanya `singleactivity`; bisa diubah operator di pratinjau. */
+  format: string;
   shortname: string;
   fullname: string;
 }

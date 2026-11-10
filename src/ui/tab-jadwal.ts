@@ -3,10 +3,10 @@
 
 import { bacaJadwal, daftarSheet, urutTingkat } from '../core/jadwal';
 import { cocokkanJadwal, kunciPilihan, tambahAlias, tambahMapel } from '../core/kamus';
-import { susunBarisMapel, susunBarisMapelSemua, tulisMapelCsv, tulisMapelXlsx, urutGabung } from '../core/mapel';
+import { periksaEditMapel, susunBarisMapel, susunBarisMapelSemua, terapkanEditMapel, tulisMapelCsv, tulisMapelXlsx, ubahSelMapel, urutGabung, type BarisDiedit, type EditMapel, type KolomMapel } from '../core/mapel';
 import { formatTanggal } from '../core/tanggal';
 import { GalatFormat, type HasilCocok, type JadwalUjian, type Kamus, type Peringatan, type PilihanMapel } from '../core/tipe';
-import { catatHasilMapel, muatKamus, muatPilihan, saatKamusBerubah, simpanKamus, simpanPilihan, unduhCsv, unduhFile } from './simpan';
+import { catatHasilMapel, muatEditMapel, muatKamus, muatPilihan, saatKamusBerubah, simpanEditMapel, simpanKamus, simpanPilihan, unduhCsv, unduhFile } from './simpan';
 import { daftarPesan, el, tabel, type BarisTabel } from './tabel';
 
 interface Status {
@@ -23,6 +23,8 @@ interface Status {
   kamus: Kamus;
   /** Per tingkat. */
   pilihan: Record<string, PilihanMapel>;
+  /** Isi sel pratinjau yang diubah operator (kunci = shortname asli), per sheet. */
+  edit: EditMapel;
 }
 
 const PILIH_BARU = '__baru__';
@@ -41,6 +43,7 @@ export function pasangTabJadwal(akar: HTMLElement): void {
     sudahKonvert: false,
     kamus: muatKamus(),
     pilihan: {},
+    edit: {},
   };
 
   saatKamusBerubah((k) => {
@@ -73,6 +76,7 @@ export function pasangTabJadwal(akar: HTMLElement): void {
     try {
       s.jadwal = await bacaJadwal(s.file!, nama);
       s.pilihan = muatPilihan(nama);
+      s.edit = muatEditMapel(nama);
       if (!s.jadwal.tingkat.includes(s.tingkat)) s.tingkat = urutTingkat(s.jadwal.tingkat)[0];
     } catch (e) {
       s.galat = pesanGalat(e);
@@ -261,9 +265,13 @@ export function pasangTabJadwal(akar: HTMLElement): void {
     const per = daftar.map((t) => ({ tingkat: t, hasil: cocokkanJadwal(j, t, s.kamus, s.pilihan[t] ?? {}) }));
     for (const p of per) {
       const lengkap = !p.hasil.some((h) => h.status === 'tidak-dikenal');
-      catatHasilMapel(p.tingkat, susunBarisMapel(p.hasil, p.tingkat, s.kamus).map((b) => b.shortname), lengkap);
+      // shortname yang diedit di pratinjau juga dipakai sebagai kode course di tab User → Moodle
+      catatHasilMapel(p.tingkat, susunBarisMapel(p.hasil, p.tingkat, s.kamus).map((b) => s.edit[b.shortname]?.shortname ?? b.shortname), lengkap);
     }
-    const baris = semuaKelas ? susunBarisMapelSemua(per, s.kamus) : susunBarisMapel(per[0].hasil, s.tingkat, s.kamus);
+    const diedit = terapkanEditMapel(semuaKelas ? susunBarisMapelSemua(per, s.kamus) : susunBarisMapel(per[0].hasil, s.tingkat, s.kamus), s.edit);
+    const baris = diedit.map((d) => d.hasil);
+    const masalahEdit = periksaEditMapel(baris);
+    const jumlahDiedit = diedit.filter((d) => s.edit[d.asli.shortname]).length;
     const hasil = per.flatMap((p) => p.hasil.map((h) => ({ ...h, tingkat: p.tingkat })));
     const tidakDikenal = hasil.filter((h) => h.status === 'tidak-dikenal');
     const duplikat = hasil.filter((h) => h.status === 'duplikat');
@@ -275,6 +283,7 @@ export function pasangTabJadwal(akar: HTMLElement): void {
     if (tidakDikenal.length) {
       pesan.push({ tingkat: 'galat', pesan: `${tidakDikenal.length} nama mapel belum ada di kamus. Pilih mapelnya di tabel merah sebelum mengunduh.` });
     }
+    for (const m of masalahEdit) pesan.push({ tingkat: 'galat', pesan: `Hasil edit belum benar: ${m}.` });
     if (duplikat.length) {
       pesan.push({
         tingkat: 'peringatan',
@@ -300,7 +309,7 @@ export function pasangTabJadwal(akar: HTMLElement): void {
         )
       : null;
 
-    const unduh = el('button', { class: 'tombol utama', type: 'button', id: 'tombol-unduh', disabled: tidakDikenal.length > 0 || baris.length === 0 }, `Unduh ${namaFile}`);
+    const unduh = el('button', { class: 'tombol utama', type: 'button', id: 'tombol-unduh', disabled: tidakDikenal.length > 0 || masalahEdit.length > 0 || baris.length === 0 }, `Unduh ${namaFile}`);
     unduh.addEventListener('click', async () => {
       unduh.disabled = true;
       try {
@@ -321,14 +330,50 @@ export function pasangTabJadwal(akar: HTMLElement): void {
       daftarPesan(pesan),
       tabelMasalah,
       masalah.length ? el('p', {}) : null,
+      el('p', { class: 'bantu' }, 'Klik sel untuk mengubah isinya. Perubahan dipakai di file unduhan dan diingat di browser ini; sel yang diubah berwarna kuning.'),
       tabel(
         [{ judul: 'category', angka: true }, { judul: 'format' }, { judul: 'shortname' }, { judul: 'fullname' }],
-        baris.map((b) => ({ sel: [b.category, b.format, b.shortname, b.fullname] })),
+        diedit.map((d) => ({ sel: (['category', 'format', 'shortname', 'fullname'] as const).map((k) => selEdit(d, k)) })),
         `Hasil konversi mapel ${label}`,
       ),
-      el('p', { class: 'jumlah' }, `${baris.length} mapel dalam ${new Set(baris.map((b) => b.category)).size} hari.`),
+      el('p', { class: 'jumlah' }, `${baris.length} mapel dalam ${new Set(baris.map((b) => b.category)).size} hari.${jumlahDiedit ? ` ${jumlahDiedit} baris diedit.` : ''}`),
+      jumlahDiedit ? tombolKembalikan() : null,
       el('div', { class: 'baris-kontrol' }, unduh, unduhCsvTombol),
     );
+  }
+
+  /** Satu sel pratinjau yang bisa diedit; id dari shortname asli agar fokus bertahan setelah digambar ulang. */
+  function selEdit(d: BarisDiedit, kolom: KolomMapel): HTMLElement {
+    const nilai = d.hasil[kolom];
+    const asli = d.asli[kolom];
+    const berubah = s.edit[d.asli.shortname]?.[kolom] !== undefined;
+    const input = el('input', {
+      type: kolom === 'category' ? 'number' : 'text',
+      min: kolom === 'category' ? '1' : undefined,
+      id: `edit-${kolom}-${d.asli.shortname.replace(/[^A-Za-z0-9]/g, '_')}`,
+      class: `sel-edit${berubah ? ' diedit' : ''}${kolom === 'category' ? ' angka' : ''}`,
+      value: Number.isNaN(nilai) ? '' : String(nilai),
+      'aria-label': `${kolom} untuk ${d.asli.shortname}`,
+      title: berubah ? `Hasil konversi: ${asli}` : undefined,
+    });
+    input.addEventListener('change', () => {
+      s.edit = ubahSelMapel(s.edit, d.asli, kolom, input.value);
+      simpanEditMapel(s.sheetDipilih, s.edit);
+      // gambar setelah fokus pindah ke sel berikutnya, supaya fokusnya ikut dipulihkan
+      setTimeout(gambar, 0);
+    });
+    return input;
+  }
+
+  function tombolKembalikan(): HTMLElement {
+    const b = el('button', { class: 'tombol', type: 'button' }, 'Kembalikan semua ke hasil konversi');
+    b.addEventListener('click', () => {
+      if (!confirm('Hapus semua perubahan di pratinjau mapel untuk sheet ini?')) return;
+      s.edit = {};
+      simpanEditMapel(s.sheetDipilih, s.edit);
+      gambar();
+    });
+    return el('div', { class: 'baris-kontrol' }, b);
   }
 
   function gambar(): void {

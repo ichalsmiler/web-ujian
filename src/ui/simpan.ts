@@ -2,6 +2,7 @@
 // Data siswa dan file jadwal TIDAK pernah disimpan di sini.
 
 import { kamusAwal, lengkapiKamus } from '../core/kamus';
+import type { EditMapel } from '../core/mapel';
 import type { Kamus, PesertaMasuk, PilihanMapel } from '../core/tipe';
 
 const KUNCI_KAMUS = 'web-ujian.kamus';
@@ -81,6 +82,27 @@ export function muatPilihan(namaSheet: string): Record<string, PilihanMapel> {
 export function simpanPilihan(namaSheet: string, pilihan: Record<string, PilihanMapel>): void {
   try {
     localStorage.setItem(`web-ujian.pilihan.${namaSheet}`, JSON.stringify(pilihan));
+  } catch {
+    // abaikan
+  }
+}
+
+/** Edit operator di pratinjau mapel (kunci = shortname asli), per sheet jadwal. */
+export function muatEditMapel(namaSheet: string): EditMapel {
+  try {
+    const data = JSON.parse(localStorage.getItem(`web-ujian.edit-mapel.${namaSheet}`) ?? '{}') as unknown;
+    if (data && typeof data === 'object' && !Array.isArray(data)) return data as EditMapel;
+  } catch {
+    // abaikan
+  }
+  return {};
+}
+
+export function simpanEditMapel(namaSheet: string, edit: EditMapel): void {
+  try {
+    const kunci = `web-ujian.edit-mapel.${namaSheet}`;
+    if (Object.keys(edit).length) localStorage.setItem(kunci, JSON.stringify(edit));
+    else localStorage.removeItem(kunci);
   } catch {
     // abaikan
   }

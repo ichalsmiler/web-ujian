@@ -73,3 +73,56 @@ export function tulisMapelCsv(baris: BarisMapel[]): string {
     { newline: '\r\n' },
   );
 }
+
+// ---------- edit operator di pratinjau ----------
+
+export type KolomMapel = 'category' | 'format' | 'shortname' | 'fullname';
+
+/** Perubahan operator per baris, dengan kunci shortname asli hasil konversi. */
+export type EditMapel = Record<string, Partial<BarisMapel>>;
+
+/**
+ * Mengembalikan edit baru setelah satu sel diubah. Nilai yang sama dengan hasil konversi
+ * menghapus editnya. Input tidak diubah.
+ */
+export function ubahSelMapel(edit: EditMapel, asli: BarisMapel, kolom: KolomMapel, nilai: string): EditMapel {
+  const rapi = nilai.trim().replace(/\s+/g, ' ');
+  const baru: Partial<BarisMapel> = { ...(edit[asli.shortname] ?? {}) };
+  // category kosong atau bukan angka → NaN, ditolak oleh periksaEditMapel
+  const isi: string | number = kolom === 'category' ? (rapi === '' ? Number.NaN : Number(rapi)) : rapi;
+  if (isi === asli[kolom]) delete baru[kolom];
+  else (baru as Record<KolomMapel, string | number>)[kolom] = isi;
+  const hasil = { ...edit };
+  if (Object.keys(baru).length) hasil[asli.shortname] = baru;
+  else delete hasil[asli.shortname];
+  return hasil;
+}
+
+export interface BarisDiedit {
+  /** Baris hasil konversi (kunci edit = asli.shortname). */
+  asli: BarisMapel;
+  /** Baris setelah edit operator; inilah yang ditulis ke file. */
+  hasil: BarisMapel;
+}
+
+/** Menerapkan edit operator; urutan dipertahankan, lalu diurutkan stabil menurut category. */
+export function terapkanEditMapel(baris: BarisMapel[], edit: EditMapel): BarisDiedit[] {
+  return baris
+    .map((asli, i) => ({ asli, hasil: { ...asli, ...(edit[asli.shortname] ?? {}) }, i }))
+    .sort((x, y) => (x.hasil.category || 0) - (y.hasil.category || 0) || x.i - y.i)
+    .map(({ asli, hasil }) => ({ asli, hasil }));
+}
+
+/** Masalah pada hasil edit yang membuat file belum boleh diunduh. */
+export function periksaEditMapel(baris: BarisMapel[]): string[] {
+  const masalah: string[] = [];
+  const kategoriSalah = baris.filter((b) => !Number.isInteger(b.category) || b.category < 1);
+  if (kategoriSalah.length) masalah.push(`category harus angka bulat 1 atau lebih (${kategoriSalah.map((b) => b.shortname || '?').join(', ')})`);
+  const kosong = baris.filter((b) => !b.format || !b.shortname || !b.fullname);
+  if (kosong.length) masalah.push(`${kosong.length} baris punya format, shortname, atau fullname yang kosong`);
+  const hitung = new Map<string, number>();
+  for (const b of baris) if (b.shortname) hitung.set(b.shortname, (hitung.get(b.shortname) ?? 0) + 1);
+  const kembar = [...hitung].filter(([, n]) => n > 1).map(([s]) => s);
+  if (kembar.length) masalah.push(`shortname harus unik: ${kembar.join(', ')} dipakai lebih dari sekali`);
+  return masalah;
+}

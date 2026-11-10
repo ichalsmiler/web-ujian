@@ -60,6 +60,12 @@ tr.merah td { background: var(--merah-latar); }
 tr.kuning td { background: var(--kuning-latar); }
 tr.abu td { background: var(--abu-latar); color: var(--redup); }
 td.angka { text-align: right; font-variant-numeric: tabular-nums; }
+/* Sel pratinjau mapel yang bisa diedit: tampak seperti teks biasa sampai disentuh */
+input.sel-edit { font: inherit; width: 100%; min-width: 6ch; box-sizing: border-box; padding: 0.2rem 0.35rem; border: 1px solid transparent; border-bottom-color: var(--garis); border-radius: 4px; background: transparent; }
+input.sel-edit.angka { width: 6ch; text-align: right; }
+input.sel-edit:hover { border-color: var(--garis); background: #fff; }
+input.sel-edit:focus { border-color: var(--utama); background: #fff; outline: 2px solid transparent; }
+input.sel-edit.diedit { background: var(--kuning-latar); border-color: var(--kuning); }
 
 .jumlah { color: var(--redup); margin: 0.5rem 0 0; }
 
