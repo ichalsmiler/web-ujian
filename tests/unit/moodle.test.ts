@@ -9,7 +9,7 @@ const cbt = keCbt(peserta);
 
 const MAPEL = new Map<string, string[]>([
   ['X', ['USBK-X-MATEMATIKA', 'USBK-X-BINDO', 'USBK-X-PAI', 'USBK-X-PAK', 'USBK-X-KKA']],
-  ['XI', ['USBK-XI-MATEMATIKA', 'USBK-XI-BINDO', 'USBK-XI-PAI', 'USBK-XI-PAK', 'USBK-XI-FISIKA', 'USBK-XI-KIMIA LANJUT', 'USBK-XI-PKWU', 'USBK-XI-BIOLOGI LANJUTAN']],
+  ['XI', ['USBK-XI-MATEMATIKA', 'USBK-XI-BINDO', 'USBK-XI-PAI', 'USBK-XI-PAK', 'USBK-XI-FISIKA', 'USBK-XI-KIMIA', 'USBK-XI-PKWU', 'USBK-XI-BIOLOGI']],
   ['XII', ['USBK-XII-MATEMATIKA', 'USBK-XII-PJOK', 'USBK-XII-SEJARAH INDO', 'USBK-XII-EKONOMI']],
 ]);
 
@@ -18,8 +18,8 @@ describe('pengecualianAwal', () => {
     const k = pengecualianAwal();
     expect(k.X).toEqual([]);
     expect(k.XI).toEqual([
-      'USBK-XI-FISIKA', 'USBK-XI-KIMIA LANJUT', 'USBK-XI-BING LANJUT', 'USBK-XI-BINDO LANJUT',
-      'USBK-XI-EKONOMI', 'USBK-XI-GEOGRAFI', 'USBK-XI-MATEMATIKA LANJUT', 'USBK-XI-INFORMATIKA', 'USBK-XI-BIOLOGI LANJUTAN', 'USBK-XI-SOSIOLOGI LANJUTAN',
+      'USBK-XI-FISIKA', 'USBK-XI-KIMIA', 'USBK-XI-BING LANJUT', 'USBK-XI-BINDO LANJUT',
+      'USBK-XI-EKONOMI', 'USBK-XI-GEOGRAFI', 'USBK-XI-MATEMATIKA LANJUT', 'USBK-XI-INFORMATIKA', 'USBK-XI-BIOLOGI', 'USBK-XI-SOSIOLOGI',
     ]);
     expect(k.XII).toEqual(k.XI.map((s) => s.replace('USBK-XI-', 'USBK-XII-')));
   });
@@ -114,10 +114,10 @@ describe('tulisMoodleCsv', () => {
 
 describe('keMoodle — kelas moving', () => {
   it('mapel moving siswa ditambahkan setelah mapel wajib, tanpa ganda', () => {
-    const moving = new Map([['92-26-0001', ['USBK-XI-FISIKA', 'USBK-XI-BIOLOGI LANJUTAN', 'USBK-XI-MATEMATIKA']]]);
+    const moving = new Map([['92-26-0001', ['USBK-XI-FISIKA', 'USBK-XI-BIOLOGI', 'USBK-XI-MATEMATIKA']]]);
     const h = keMoodle(peserta, cbt, MAPEL, pengecualianAwal(), moving);
     expect(h.baris.find((b) => b.username === '92-26-0001')!.course).toEqual([
-      'USBK-XI-MATEMATIKA', 'USBK-XI-BINDO', 'USBK-XI-PAI', 'USBK-XI-PAK', 'USBK-XI-PKWU', 'USBK-XI-FISIKA', 'USBK-XI-BIOLOGI LANJUTAN',
+      'USBK-XI-MATEMATIKA', 'USBK-XI-BINDO', 'USBK-XI-PAI', 'USBK-XI-PAK', 'USBK-XI-PKWU', 'USBK-XI-FISIKA', 'USBK-XI-BIOLOGI',
     ]);
   });
 

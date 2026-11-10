@@ -18,7 +18,7 @@ type Saring = 'perlu' | 'mirip' | 'semua';
 interface Status {
   kelompok: KelompokMoving[];
   galat: Peringatan[];
-  /** Kode mapel yang diganti operator, per singkatan (mis. BIO → BIOLOGI LANJUTAN). */
+  /** Kode mapel yang diganti operator, per singkatan (mis. BIO → BIOLOGI). */
   kodeDiganti: Record<string, string>;
   /** Pilihan operator per baris file: username, atau '' = abaikan. */
   pilihan: Record<string, string>;

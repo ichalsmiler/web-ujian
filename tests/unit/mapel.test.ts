@@ -44,7 +44,8 @@ describe('susunBarisMapel — XII', () => {
 
   it('fullname huruf kapital semua; ejaan nama lengkap tidak "diperbaiki"', () => {
     expect(baris.find((b) => b.shortname === 'USBK-XII-BINDO LANJUT')!.fullname).toBe('BHS INDONESIA LANJT XII');
-    expect(baris.find((b) => b.shortname === 'USBK-XII-KIMIA LANJUT')!.fullname).toBe('KIMIA LANJUT XII'); // huruf kapital semua
+    expect(baris.find((b) => b.shortname === 'USBK-XII-INFORMATIKA')!.fullname).toBe('INFORMATIKA XII'); // kamus: "Informatika"
+    expect(baris.find((b) => b.shortname === 'USBK-XII-KIMIA')!.fullname).toBe('KIMIA XII'); // Kimia Lanjutan → KIMIA
   });
 
   it('tingkat lain memakai tingkatnya sendiri', () => {

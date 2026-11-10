@@ -16,7 +16,11 @@ export function normalisasiNama(teks: string): string {
     .replace(/\blanjut\b/g, 'lanjutan');
 }
 
-/** Kode dan nama lengkap dari MAPEL FIX.xlsx (tanpa awalan USBK-XII- dan akhiran XII). */
+/**
+ * Kode dan nama lengkap dari MAPEL FIX.xlsx (tanpa awalan USBK-XII- dan akhiran XII), kecuali
+ * KIMIA LANJUT → KIMIA: hanya BINDO, BING, dan MATEMATIKA yang punya versi "lanjut"
+ * (keputusan sekolah 2026-11-10).
+ */
 const MAPEL_AWAL: [kode: string, namaLengkap: string][] = [
   ['PAI', 'AGAMA ISLAM'],
   ['PAK', 'AGAMA KRISTEN'],
@@ -32,7 +36,7 @@ const MAPEL_AWAL: [kode: string, namaLengkap: string][] = [
   ['INFORMATIKA', 'Informatika'],
   ['SOSIOLOGI', 'SOSIOLOGI'],
   ['PJOK', 'PJOK'],
-  ['KIMIA LANJUT', 'Kimia Lanjut'],
+  ['KIMIA', 'KIMIA'],
   ['BINDO LANJUT', 'BHS INDONESIA LANJT'],
   ['GEOGRAFI', 'GEOGRAFI'],
   ['SENI BUDAYA', 'SENI BUDAYA'],
@@ -41,19 +45,36 @@ const MAPEL_AWAL: [kode: string, namaLengkap: string][] = [
 ];
 
 /**
- * Mapel pilihan yang tidak ada di MAPEL FIX.xlsx. Kodenya harus sama dengan kode kelas moving
- * dan daftar mapel pilihan di tab User → Moodle (dikonfirmasi sekolah 2026-11-09).
+ * Kode lama yang sudah tidak dipakai (2026-11-10). Dibuang dari kamus yang tersimpan di browser
+ * agar nama "… Lanjutan" di jadwal pindah ke kode biasa (lihat lengkapiKamus).
  */
-const MAPEL_TAMBAHAN: [kode: string, namaLengkap: string][] = [
-  ['BIOLOGI LANJUTAN', 'BIOLOGI LANJUTAN'],
-  ['SOSIOLOGI LANJUTAN', 'SOSIOLOGI LANJUTAN'],
-];
+const KODE_GANTI: Record<string, string> = {
+  'KIMIA LANJUT': 'KIMIA',
+  'BIOLOGI LANJUTAN': 'BIOLOGI',
+  'SOSIOLOGI LANJUTAN': 'SOSIOLOGI',
+};
+const KODE_DIHAPUS = Object.keys(KODE_GANTI);
+
+/** Kode mapel terbaru untuk kode lama yang mungkin masih tersimpan di browser. */
+export function kodeTerbaru(kode: string): string {
+  return KODE_GANTI[kode] ?? kode;
+}
+
+/** Shortname dengan kode lama diganti kode terbaru, mis. USBK-XI-BIOLOGI LANJUTAN → USBK-XI-BIOLOGI. */
+export function shortnameTerbaru(shortname: string): string {
+  const m = /^([^-]+-[^-]+-)(.+)$/.exec(shortname);
+  return m ? m[1] + kodeTerbaru(m[2]) : shortname;
+}
 
 /** Alias tambahan karena nama di jadwal berbeda dengan nama lengkap (research.md §6). */
 const ALIAS_TAMBAHAN: Record<string, string[]> = {
-  // Di jadwal tertulis "… Lanjutan", tetapi kode mapel pilihannya tetap GEOGRAFI / INFORMATIKA.
+  // Di jadwal tertulis "… Lanjutan", tetapi hanya BINDO, BING, dan MATEMATIKA yang punya kode
+  // "lanjut"; mapel pilihan lain memakai kode biasa.
   GEOGRAFI: ['geografi lanjutan'],
   INFORMATIKA: ['informatika lanjutan'],
+  BIOLOGI: ['biologi lanjutan'],
+  SOSIOLOGI: ['sosiologi lanjutan'],
+  KIMIA: ['kimia lanjutan'],
   'BINDO LANJUT': ['bahasa indonesia lanjutan'],
   'SEJARAH INDO': ['sejarah'],
   PAI: ['pendidikan agama islam'],
@@ -61,7 +82,7 @@ const ALIAS_TAMBAHAN: Record<string, string[]> = {
 };
 
 export function kamusAwal(): Kamus {
-  const mapel: Mapel[] = [...MAPEL_AWAL, ...MAPEL_TAMBAHAN].map(([kode, namaLengkap]) => {
+  const mapel: Mapel[] = MAPEL_AWAL.map(([kode, namaLengkap]) => {
     const alias = new Set([normalisasiNama(namaLengkap), normalisasiNama(kode), ...(ALIAS_TAMBAHAN[kode] ?? [])]);
     return { kode, namaLengkap, alias: [...alias] };
   });
@@ -82,9 +103,10 @@ function buangAliasGanda(mapel: Mapel[]): Mapel[] {
 /**
  * Melengkapi kamus tersimpan (dari browser) dengan mapel dan alias kamus awal yang belum ada,
  * mis. setelah aplikasi diperbarui. Isian operator tidak diubah: alias yang sudah dipakai
- * mapel atau grup lain tidak ditambahkan. Input tidak diubah.
+ * mapel atau grup lain tidak ditambahkan. Kode lama di KODE_DIHAPUS dibuang. Input tidak diubah.
  */
-export function lengkapiKamus(kamus: Kamus): Kamus {
+export function lengkapiKamus(simpanan: Kamus): Kamus {
+  const kamus = { ...simpanan, mapel: simpanan.mapel.filter((m) => !KODE_DIHAPUS.includes(m.kode)) };
   const awal = kamusAwal();
   const dipakai = new Set([...kamus.mapel.flatMap((m) => m.alias), ...kamus.grup.flatMap((g) => g.alias)]);
   const ambilBaru = (alias: string[]) => alias.filter((a) => !dipakai.has(a) && (dipakai.add(a), true));

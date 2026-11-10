@@ -1,7 +1,7 @@
 // Penyimpanan kamus & pengaturan di localStorage, serta unduhan file.
 // Data siswa dan file jadwal TIDAK pernah disimpan di sini.
 
-import { kamusAwal, lengkapiKamus } from '../core/kamus';
+import { kamusAwal, kodeTerbaru, lengkapiKamus, shortnameTerbaru } from '../core/kamus';
 import type { EditMapel } from '../core/mapel';
 import type { Kamus, PesertaMasuk, PilihanMapel } from '../core/tipe';
 
@@ -72,7 +72,12 @@ export function unduhFile(nama: string, isi: ArrayBuffer | Uint8Array, mime = MI
 export function muatPilihan(namaSheet: string): Record<string, PilihanMapel> {
   try {
     const data = JSON.parse(localStorage.getItem(`web-ujian.pilihan.${namaSheet}`) ?? '{}') as unknown;
-    if (data && typeof data === 'object') return data as Record<string, PilihanMapel>;
+    if (data && typeof data === 'object') {
+      // kode lama (mis. KIMIA LANJUT) diganti kode terbaru
+      return Object.fromEntries(
+        Object.entries(data as Record<string, PilihanMapel>).map(([t, p]) => [t, Object.fromEntries(Object.entries(p).map(([k, kode]) => [k, kode.map(kodeTerbaru)]))]),
+      );
+    }
   } catch {
     // abaikan
   }
@@ -91,7 +96,10 @@ export function simpanPilihan(namaSheet: string, pilihan: Record<string, Pilihan
 export function muatEditMapel(namaSheet: string): EditMapel {
   try {
     const data = JSON.parse(localStorage.getItem(`web-ujian.edit-mapel.${namaSheet}`) ?? '{}') as unknown;
-    if (data && typeof data === 'object' && !Array.isArray(data)) return data as EditMapel;
+    // kunci = shortname asli; kode lama (mis. USBK-XI-KIMIA LANJUT) diganti kode terbaru
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      return Object.fromEntries(Object.entries(data as EditMapel).map(([k, v]) => [shortnameTerbaru(k), v]));
+    }
   } catch {
     // abaikan
   }
@@ -176,7 +184,9 @@ export function muatPengecualian(awal: Record<string, string[]>): Record<string,
   try {
     const data = JSON.parse(localStorage.getItem(KUNCI_KECUALI) ?? 'null') as unknown;
     if (data && typeof data === 'object' && Object.values(data).every((v) => Array.isArray(v) && v.every((x) => typeof x === 'string'))) {
-      return { ...awal, ...(data as Record<string, string[]>) };
+      const lama = data as Record<string, string[]>;
+      const baru = Object.fromEntries(Object.entries(lama).map(([t, d]) => [t, [...new Set(d.map(shortnameTerbaru))]]));
+      return { ...awal, ...baru };
     }
   } catch {
     // abaikan
@@ -236,9 +246,11 @@ export function muatMoving(): SimpananMoving {
     return {
       pilihan: rekamanTeks(d.pilihan) ? d.pilihan : {},
       manual: Array.isArray(d.manual)
-        ? d.manual.filter((m): m is SimpananMoving['manual'][number] => !!m && typeof m.username === 'string' && typeof m.shortname === 'string')
+        ? d.manual
+            .filter((m): m is SimpananMoving['manual'][number] => !!m && typeof m.username === 'string' && typeof m.shortname === 'string')
+            .map((m) => ({ ...m, shortname: shortnameTerbaru(m.shortname) }))
         : [],
-      kodeDiganti: rekamanTeks(d.kodeDiganti) ? d.kodeDiganti : {},
+      kodeDiganti: rekamanTeks(d.kodeDiganti) ? Object.fromEntries(Object.entries(d.kodeDiganti).map(([k, v]) => [k, kodeTerbaru(v)])) : {},
     };
   } catch {
     return kosongMoving();

@@ -57,7 +57,7 @@ describe('bacaFileMoving', () => {
   });
 
   it('mengenali mapel dari judul dan memetakan ke kode kamus', () => {
-    expect(kelompok[0]).toMatchObject({ singkatan: 'BIOLOGI', kode: 'BIOLOGI LANJUTAN', tingkat: 'XI', sheet: '1' });
+    expect(kelompok[0]).toMatchObject({ singkatan: 'BIOLOGI', kode: 'BIOLOGI', tingkat: 'XI', sheet: '1' });
     expect(kelompok[0].siswa[1]).toMatchObject({ nama: 'Siswa Contoh Dua.', kelas: 'XI 1' });
     expect(kelompok[0].siswa[0].lokasi).toBe('DAFTAR HADIR KELAS MOVING XI BIO.xlsx › 1 baris 5');
   });
@@ -73,14 +73,14 @@ describe('bacaFileMoving', () => {
       BING: 'BING LANJUT',
       BIING: 'BING LANJUT',
       BINDO: 'BINDO LANJUT',
-      BIOLOGI: 'BIOLOGI LANJUTAN',
+      BIOLOGI: 'BIOLOGI',
       EKONOMI: 'EKONOMI',
       FISIKA: 'FISIKA',
       GEOGRAFI: 'GEOGRAFI',
       INFORMATIKA: 'INFORMATIKA',
-      KIMIA: 'KIMIA LANJUT',
+      KIMIA: 'KIMIA',
       MATEMATIKA: 'MATEMATIKA LANJUT',
-      SOSIOLOGI: 'SOSIOLOGI LANJUTAN',
+      SOSIOLOGI: 'SOSIOLOGI',
     });
   });
 
@@ -131,9 +131,9 @@ describe('movingPerSiswa', () => {
 
   it('shortname moving per username', () => {
     const m = movingPerSiswa(hasil, {}, []);
-    expect(m.get('92-26-0001')).toEqual(['USBK-XI-BIOLOGI LANJUTAN']);
-    expect(m.get('92-26-0003')).toEqual(['USBK-XI-BIOLOGI LANJUTAN']); // hasil "mirip" ikut
-    expect(m.get('92-26-0006')).toEqual(['USBK-XI-BIOLOGI LANJUTAN']); // "C. Lestari", nama disingkat
+    expect(m.get('92-26-0001')).toEqual(['USBK-XI-BIOLOGI']);
+    expect(m.get('92-26-0003')).toEqual(['USBK-XI-BIOLOGI']); // hasil "mirip" ikut
+    expect(m.get('92-26-0006')).toEqual(['USBK-XI-BIOLOGI']); // "C. Lestari", nama disingkat
     expect(m.has('92-26-0004')).toBe(false); // "Orang Tidak Dikenal" belum dipilih
   });
 
@@ -141,16 +141,16 @@ describe('movingPerSiswa', () => {
     const lestari = hasil.find((h) => h.siswa.nama === 'C. Lestari')!;
     const mirip = hasil.find((h) => h.status === 'mirip')!;
     const m = movingPerSiswa(hasil, { [kunciPasangan(lestari)]: '92-26-0006', [kunciPasangan(mirip)]: '' }, []);
-    expect(m.get('92-26-0006')).toEqual(['USBK-XI-BIOLOGI LANJUTAN']);
+    expect(m.get('92-26-0006')).toEqual(['USBK-XI-BIOLOGI']);
     expect(m.has('92-26-0003')).toBe(false);
   });
 
   it('entri manual ditambahkan tanpa ganda', () => {
     const m = movingPerSiswa(hasil, {}, [
       { username: '92-26-0001', shortname: 'USBK-XI-FISIKA' },
-      { username: '92-26-0001', shortname: 'USBK-XI-BIOLOGI LANJUTAN' },
+      { username: '92-26-0001', shortname: 'USBK-XI-BIOLOGI' },
     ]);
-    expect(m.get('92-26-0001')).toEqual(['USBK-XI-BIOLOGI LANJUTAN', 'USBK-XI-FISIKA']);
+    expect(m.get('92-26-0001')).toEqual(['USBK-XI-BIOLOGI', 'USBK-XI-FISIKA']);
   });
 });
 
@@ -256,8 +256,8 @@ describe('kunci pilihan operator per tingkat (moving XI dan XII)', async () => {
   it('kode mapel yang diganti hanya berlaku untuk tingkatnya; kunci lama berlaku untuk semua', () => {
     const xi = baris('XI').kelompok;
     const xii = baris('XII').kelompok;
-    const diganti = { [kunciKodeMoving(xii)]: 'KIMIA LANJUT' };
-    expect(kodeMovingAktif(xii, diganti)).toBe('KIMIA LANJUT');
+    const diganti = { [kunciKodeMoving(xii)]: 'KIMIA' };
+    expect(kodeMovingAktif(xii, diganti)).toBe('KIMIA');
     expect(kodeMovingAktif(xi, diganti)).toBe('FISIKA');
     expect(kodeMovingAktif(xi, { FIS: 'EKONOMI' })).toBe('EKONOMI');
     expect(kodeMovingAktif(xi, { FIS: 'EKONOMI', [kunciKodeMoving(xi)]: 'GEOGRAFI' })).toBe('GEOGRAFI');
@@ -316,7 +316,7 @@ describe('rekap kelas moving (.xlsx)', async () => {
   const ExcelJS = (await import('exceljs')).default;
   const { rekapMoving, tulisRekapMovingXlsx, keteranganRekap } = await import('../../src/core/moving');
   const SISWA = [p('92-26-0201', 'Siswa Empat', 'XI-1'), p('92-26-0202', 'Siswa Dua', 'XI-1'), p('92-26-0203', 'Siswa Lima', 'XI-2'), p('92-26-0204', 'Siswa Nol', 'XI-2')];
-  const mapel = (n: number) => ['FISIKA', 'EKONOMI', 'GEOGRAFI', 'INFORMATIKA', 'KIMIA LANJUT'].slice(0, n).map((k) => `USBK-XI-${k}`);
+  const mapel = (n: number) => ['FISIKA', 'EKONOMI', 'GEOGRAFI', 'INFORMATIKA', 'KIMIA'].slice(0, n).map((k) => `USBK-XI-${k}`);
   const moving = new Map([['92-26-0201', mapel(4)], ['92-26-0202', mapel(2)], ['92-26-0203', mapel(5)]]);
   const baris = rekapMoving(SISWA, moving);
 

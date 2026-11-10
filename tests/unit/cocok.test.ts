@@ -30,8 +30,8 @@ describe('cocokkanJadwal — XII', () => {
 
   it('mapel pilihan "… Lanjutan" dikenali kamus awal, jadi tidak ada yang tidak-dikenal', () => {
     expect(hasil.filter((h) => h.status === 'tidak-dikenal').map((h) => h.teksAsli)).toEqual([]);
-    expect(cari('Biologi Lanjutan')[0]).toMatchObject({ status: 'cocok', kode: ['BIOLOGI LANJUTAN'] });
-    expect(cari('Sosiologi Lanjutan')[0]).toMatchObject({ status: 'cocok', kode: ['SOSIOLOGI LANJUTAN'] });
+    expect(cari('Biologi Lanjutan')[0]).toMatchObject({ status: 'cocok', kode: ['BIOLOGI'] });
+    expect(cari('Sosiologi Lanjutan')[0]).toMatchObject({ status: 'cocok', kode: ['SOSIOLOGI'] });
     expect(cari('Geografi Lanjutan')[0]).toMatchObject({ status: 'cocok', kode: ['GEOGRAFI'] });
     expect(cari('Informatika Lanjutan')[0]).toMatchObject({ status: 'cocok', kode: ['INFORMATIKA'] });
   });
@@ -51,9 +51,10 @@ describe('cocokkanJadwal — XII', () => {
 });
 
 describe('cocokkanJadwal — X', () => {
-  it('KKA dan Kimia → tidak-dikenal', () => {
+  it('KKA → tidak-dikenal; Kimia → KIMIA', () => {
     const hasil = cocokkanJadwal(jadwal, 'X', kamusAwal());
-    expect(hasil.filter((h) => h.status === 'tidak-dikenal').map((h) => h.teksAsli)).toEqual(['KKA', 'Kimia']);
+    expect(hasil.filter((h) => h.status === 'tidak-dikenal').map((h) => h.teksAsli)).toEqual(['KKA']);
+    expect(hasil.find((h) => h.teksAsli === 'Kimia')).toMatchObject({ status: 'cocok', kode: ['KIMIA'] });
     expect(hasil.find((h) => h.teksAsli === 'KKA')!.lokasi).toBe('F13');
   });
 });

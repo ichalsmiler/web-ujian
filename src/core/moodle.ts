@@ -17,15 +17,15 @@ const MIN_KOLOM_COURSE = 14;
  */
 const MAPEL_PILIHAN = [
   'FISIKA',
-  'KIMIA LANJUT',
+  'KIMIA',
   'BING LANJUT',
   'BINDO LANJUT',
   'EKONOMI',
   'GEOGRAFI',
   'MATEMATIKA LANJUT',
   'INFORMATIKA',
-  'BIOLOGI LANJUTAN',
-  'SOSIOLOGI LANJUTAN',
+  'BIOLOGI',
+  'SOSIOLOGI',
 ];
 
 /** Shortname yang dikecualikan per tingkat. X: tidak ada; XI dan XII: mapel pilihan. */

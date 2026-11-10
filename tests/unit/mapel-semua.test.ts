@@ -9,7 +9,6 @@ const jadwal = await bacaJadwal(bacaFixture('jadwal-2026.xlsx'), SHEET_2026);
 
 let kamus = kamusAwal();
 kamus = tambahMapel(kamus, 'KKA', 'KKA', 'KKA');
-kamus = tambahMapel(kamus, 'KIMIA', 'KIMIA', 'Kimia');
 
 const perTingkat = jadwal.tingkat.map((t) => ({ tingkat: t, hasil: cocokkanJadwal(jadwal, t, kamus) }));
 const semua = susunBarisMapelSemua(perTingkat, kamus);
@@ -44,7 +43,7 @@ describe('susunBarisMapelSemua', () => {
   it('category = hari ke-N: 23 Nov = 1 … 3 Des = 8, untuk semua kelas', () => {
     expect([...new Set(semua.map((b) => b.category))]).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     expect(semua.find((b) => b.shortname === 'USBK-X-KKA')!.category).toBe(5); // Senin 30 Nov
-    expect(semua.find((b) => b.shortname === 'USBK-XI-BIOLOGI LANJUTAN')!.category).toBe(8); // Kamis 3 Des
+    expect(semua.find((b) => b.shortname === 'USBK-XI-BIOLOGI')!.category).toBe(8); // Kamis 3 Des
   });
 
   it('berisi semua baris dari ketiga kelas, tanpa kehilangan atau ganda', () => {

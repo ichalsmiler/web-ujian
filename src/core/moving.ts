@@ -6,13 +6,14 @@ import ExcelJS from 'exceljs';
 import { teksSel } from './tanggal';
 import { GalatFormat, type PesertaMasuk } from './tipe';
 
-/** Singkatan mapel di file/judul moving → kode mapel di kamus (dikonfirmasi sekolah 2026-11-09). */
+/** Singkatan mapel di file/judul moving → kode mapel di kamus (dikonfirmasi sekolah 2026-11-09;
+ * KIMIA, BIOLOGI, SOSIOLOGI tanpa "lanjut" sejak 2026-11-10). */
 export const PETA_MAPEL_MOVING: Record<string, string> = {
   BING: 'BING LANJUT',
   BIING: 'BING LANJUT',
   BINDO: 'BINDO LANJUT',
-  BIO: 'BIOLOGI LANJUTAN',
-  BIOLOGI: 'BIOLOGI LANJUTAN',
+  BIO: 'BIOLOGI',
+  BIOLOGI: 'BIOLOGI',
   EKO: 'EKONOMI',
   EKONOMI: 'EKONOMI',
   FIS: 'FISIKA',
@@ -21,11 +22,11 @@ export const PETA_MAPEL_MOVING: Record<string, string> = {
   GEOGRAFI: 'GEOGRAFI',
   INFOR: 'INFORMATIKA',
   INFORMATIKA: 'INFORMATIKA',
-  KIMIA: 'KIMIA LANJUT',
+  KIMIA: 'KIMIA',
   MATEMATIKA: 'MATEMATIKA LANJUT',
   MTK: 'MATEMATIKA LANJUT',
-  SOSIO: 'SOSIOLOGI LANJUTAN',
-  SOSIOLOGI: 'SOSIOLOGI LANJUTAN',
+  SOSIO: 'SOSIOLOGI',
+  SOSIOLOGI: 'SOSIOLOGI',
 };
 
 export interface SiswaMoving {
@@ -38,7 +39,7 @@ export interface SiswaMoving {
 export interface KelompokMoving {
   /** Judul di baris 2, mis. "BIOLOGI 2". */
   judul: string;
-  /** Kode mapel di kamus, mis. "BIOLOGI LANJUTAN"; '' jika tidak dikenali. */
+  /** Kode mapel di kamus, mis. "BIOLOGI"; '' jika tidak dikenali. */
   kode: string;
   /** Singkatan mapel yang terbaca, mis. "BIOLOGI". */
   singkatan: string;

@@ -143,9 +143,11 @@ CBTAdmin, lalu mendaftarkan setiap siswa ke course kelasnya.
 2. **Given** siswa kelas X, **Then** course1..N = semua shortname kelas X dari
    hasil konversi jadwal.
 3. **Given** siswa kelas XI atau XII, **Then** course = semua shortname kelasnya
-   kecuali mapel pilihan (awal: FISIKA, KIMIA LANJUT, PKWU, BING LANJUT, BINDO
+   kecuali mapel pilihan (awal: FISIKA, KIMIA, PKWU, BING LANJUT, BINDO
    LANJUT, SEJARAH INDO, EKONOMI, GEOGRAFI, MATEMATIKA LANJUT, INFORMATIKA,
-   BIOLOGI LANJUTAN, SOSIOLOGI LANJUTAN). Daftar ini bisa diedit per kelas.
+   BIOLOGI, SOSIOLOGI). Daftar ini bisa diedit per kelas. Hanya BINDO, BING, dan
+   MATEMATIKA yang punya kode "LANJUT"; mapel pilihan lain memakai kode biasa
+   (keputusan sekolah 2026-11-10).
 4. **Given** jadwal kelas siswa belum dikonvert, **Then** unduhan dikunci dan
    aplikasi menunjukkan kelas mana yang belum.
 5. **Given** file diunduh, **Then** formatnya sama dengan `USER MOODLE.csv`:
@@ -166,9 +168,9 @@ itu ke course siswa di file User Moodle.
 
 1. **Given** file moving di-upload (bisa banyak sekaligus), **Then** setiap sheet
    berisi murid menjadi satu kelompok, dan mapelnya dipetakan: BING→BING LANJUT,
-   BINDO→BINDO LANJUT, BIOLOGI→BIOLOGI LANJUTAN, EKONOMI→EKONOMI, FISIKA→FISIKA,
-   GEOGRAFI→GEOGRAFI, INFORMATIKA→INFORMATIKA, KIMIA→KIMIA LANJUT,
-   MATEMATIKA→MATEMATIKA LANJUT, SOSIOLOGI→SOSIOLOGI LANJUTAN (bisa diganti).
+   BINDO→BINDO LANJUT, BIOLOGI→BIOLOGI, EKONOMI→EKONOMI, FISIKA→FISIKA,
+   GEOGRAFI→GEOGRAFI, INFORMATIKA→INFORMATIKA, KIMIA→KIMIA,
+   MATEMATIKA→MATEMATIKA LANJUT, SOSIOLOGI→SOSIOLOGI (bisa diganti).
 2. **Given** nama sama persis (abaikan huruf besar/kecil, spasi, tanda baca),
    **Then** langsung dipasangkan. Nama sangat mirip (kemiripan ≥ 85%, unggul
    ≥ 10 poin dari kandidat berikutnya, nomor rombel sama) dipasangkan otomatis
